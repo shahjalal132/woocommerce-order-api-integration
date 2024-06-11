@@ -106,11 +106,26 @@ function woo_create_order_callback( $order_id ) {
     if ( is_wp_error( $response ) ) {
         $error_message = $response->get_error_message();
         error_log( "Order API submission failed: $error_message" );
-        wc_add_notice( "Order API submission failed: $error_message", 'error' );
+        update_post_meta( $order_id, '_api_submission_error', "Order API submission failed: $error_message" );
+        $order->update_status( 'failed', __( 'Order API submission failed.', 'woocommerce' ) );
     } else {
         $response_body = wp_remote_retrieve_body( $response );
-        error_log( "Order API submission successful: $response_body" );
-        wc_add_notice( "Order API submission successful: $response_body", 'success' );
+        $response_data = json_decode( $response_body, true );
+
+        if ( isset( $response_data['code'] ) && $response_data['code'] == 3001 ) {
+            $error_message = "Order API submission failed: " . implode( ' ', array_column( $response_data['error'], 'alert_message' ) );
+            error_log( $error_message );
+            update_post_meta( $order_id, '_api_submission_error', $error_message );
+            $order->update_status( 'failed', __( 'Order API submission failed.', 'woocommerce' ) );
+        } elseif ( isset( $response_data['code'] ) && $response_data['code'] == 3000 ) {
+            update_post_meta( $order_id, '_api_submission_success', __( 'Order API submission successful.', 'woocommerce' ) );
+            wc_add_notice( __( 'Order API submission successful.', 'woocommerce' ), 'success' );
+        } else {
+            $error_message = "Unexpected API response: $response_body";
+            error_log( $error_message );
+            update_post_meta( $order_id, '_api_submission_error', $error_message );
+            $order->update_status( 'failed', __( 'Order API submission failed.', 'woocommerce' ) );
+        }
     }
 }
 
@@ -118,6 +133,20 @@ function woo_create_order_callback( $order_id ) {
 add_action( 'woocommerce_thankyou', 'woo_create_order_callback', 10, 1 );
 
 
+// Display API submission messages on the order received page
+add_action( 'woocommerce_thankyou', 'display_api_submission_message' );
+function display_api_submission_message( $order_id ) {
+    $api_submission_error   = get_post_meta( $order_id, '_api_submission_error', true );
+    $api_submission_success = get_post_meta( $order_id, '_api_submission_success', true );
+
+    if ( !empty( $api_submission_error ) ) {
+        wc_print_notice( $api_submission_error, 'error' );
+    }
+
+    if ( !empty( $api_submission_success ) ) {
+        wc_print_notice( $api_submission_success, 'success' );
+    }
+}
 
 
 

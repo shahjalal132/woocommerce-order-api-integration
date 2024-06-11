@@ -18,7 +18,6 @@ function add_custom_checkout_fields( $checkout ) {
         'class'       => array( 'form-row-wide' ),
         'label'       => __( 'Reference Number' ),
         'placeholder' => __( 'Enter your reference number' ),
-        'required'    => true,
     ), $checkout->get_value( 'reference_number' ) );
 
     woocommerce_form_field( 'po_number', array(
@@ -26,7 +25,6 @@ function add_custom_checkout_fields( $checkout ) {
         'class'       => array( 'form-row-wide' ),
         'label'       => __( 'PO Number' ),
         'placeholder' => __( 'Enter your PO number' ),
-        'required'    => true,
     ), $checkout->get_value( 'po_number' ) );
 
     woocommerce_form_field( 'poster_state', array(
@@ -54,12 +52,6 @@ add_action( 'woocommerce_checkout_process', 'validate_custom_checkout_fields' );
 function validate_custom_checkout_fields() {
     if ( empty( $_POST['account_number'] ) ) {
         wc_add_notice( __( 'Please enter an account number.' ), 'error' );
-    }
-    if ( empty( $_POST['reference_number'] ) ) {
-        wc_add_notice( __( 'Please enter a reference number.' ), 'error' );
-    }
-    if ( empty( $_POST['po_number'] ) ) {
-        wc_add_notice( __( 'Please enter a PO number.' ), 'error' );
     }
     if ( empty( $_POST['poster_state'] ) ) {
         wc_add_notice( __( 'Please enter a poster state.' ), 'error' );
