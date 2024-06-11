@@ -1,5 +1,13 @@
 <?php
 
+// Enable WordPress error logging
+if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+    @error_reporting( E_ALL );
+    @ini_set( 'log_errors', 'On' );
+    @ini_set( 'display_errors', 'Off' );
+    @ini_set( 'error_log', WP_CONTENT_DIR . '/debug.log' );
+}
+
 // Hook to validate checkout and call the API
 add_action( 'woocommerce_after_checkout_validation', 'woo_validate_order_with_api', 10, 2 );
 
@@ -32,6 +40,7 @@ function woo_validate_order_with_api( $data, $errors ) {
         'Client_ZIP'              => $data['billing_postcode'],
         'Client_Email_Address'    => $data['billing_email'],
         'Client_Phone_Number'     => $data['billing_phone'],
+        'Order_Type'              => "ePosterService",
         'Poster_State'            => $poster_state,
         'Poster_Language'         => $poster_language,
     );
@@ -50,6 +59,7 @@ function woo_validate_order_with_api( $data, $errors ) {
         // Handle HTTP request errors
         $error_message = $response->get_error_message();
         $errors->add( 'validation', __( 'API request failed: ' . $error_message, 'woocommerce' ) );
+        error_log( 'API request failed: ' . $error_message );
         return;
     }
 
@@ -68,6 +78,7 @@ function woo_validate_order_with_api( $data, $errors ) {
         // Error response, add error message
         $error_message = isset( $response_data['error'] ) ? json_encode( $response_data['error'] ) : 'API error';
         $errors->add( 'validation', __( 'Order could not be placed: ' . $error_message, 'woocommerce' ) );
+        error_log( 'API error: ' . $error_message );
     }
 }
 
@@ -151,22 +162,6 @@ function woo_create_order_callback( $order, $data ) {
 
     // Save the successful API response to order meta
     update_post_meta( $order_id, '_api_submission_response', json_encode( $api_response_data ) );
-}
-
-
-// Display API submission messages on the order received page
-add_action( 'woocommerce_thankyou', 'display_api_submission_message' );
-function display_api_submission_message( $order_id ) {
-    $api_submission_error   = get_post_meta( $order_id, '_api_submission_error', true );
-    $api_submission_success = get_post_meta( $order_id, '_api_submission_success', true );
-
-    if ( !empty( $api_submission_error ) ) {
-        wc_print_notice( $api_submission_error, 'error' );
-    }
-
-    if ( !empty( $api_submission_success ) ) {
-        wc_print_notice( $api_submission_success, 'success' );
-    }
 }
 
 
