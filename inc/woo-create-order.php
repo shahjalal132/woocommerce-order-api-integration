@@ -1,23 +1,102 @@
 <?php
 
-function woo_create_order_callback( $order_id ) {
-    global $wpdb;
+// Hook to validate checkout and call the API
+add_action( 'woocommerce_after_checkout_validation', 'woo_validate_order_with_api', 10, 2 );
 
-    // Get the order
-    $order = wc_get_order( $order_id );
-    if ( !$order ) {
+function woo_validate_order_with_api( $data, $errors ) {
+    if ( !empty( $errors->get_error_messages() ) ) {
         return;
     }
 
+    $account_number   = isset( $_POST['account_number'] ) ? sanitize_text_field( $_POST['account_number'] ) : '';
+    $reference_number = isset( $_POST['reference_number'] ) ? sanitize_text_field( $_POST['reference_number'] ) : '';
+    $po_number        = isset( $_POST['po_number'] ) ? sanitize_text_field( $_POST['po_number'] ) : '';
+    $poster_state     = isset( $_POST['poster_state'] ) ? sanitize_text_field( $_POST['poster_state'] ) : '';
+    $poster_language  = isset( $_POST['poster_language'] ) ? sanitize_text_field( $_POST['poster_language'] ) : '';
+
+    // Prepare data for API submission
+    $api_data = array(
+        'Auth_String'             => '525HRD7867200143000',
+        'Account_Number'          => $account_number,
+        'Date_Order_Received'     => date( 'm-d-Y' ),
+        'Client_Company'          => $data['billing_company'],
+        'Reference_Number'        => $reference_number,
+        'Unique_ID'               => uniqid( 'order_' ),
+        'PO_Number'               => $po_number,
+        'Client_First_Name'       => $data['billing_first_name'],
+        'Client_Last_Name'        => $data['billing_last_name'],
+        'Client_Street_Address_1' => $data['billing_address_1'],
+        'Client_Street_Address_2' => $data['billing_address_2'],
+        'Client_City'             => $data['billing_city'],
+        'Client_State'            => $data['billing_state'],
+        'Client_ZIP'              => $data['billing_postcode'],
+        'Client_Email_Address'    => $data['billing_email'],
+        'Client_Phone_Number'     => $data['billing_phone'],
+        'Poster_State'            => $poster_state,
+        'Poster_Language'         => $poster_language,
+    );
+
+    // Send data to the external API
+    $response = wp_remote_post(
+        'https://www.posterelite.com/api/Order_Creation.php',
+        array(
+            'method' => 'POST',
+            'body'   => $api_data,
+        )
+    );
+
+    // Check the API response
+    if ( is_wp_error( $response ) ) {
+        // Handle HTTP request errors
+        $error_message = $response->get_error_message();
+        $errors->add( 'validation', __( 'API request failed: ' . $error_message, 'woocommerce' ) );
+        return;
+    }
+
+    $response_body = wp_remote_retrieve_body( $response );
+    $response_data = json_decode( $response_body, true );
+
+    if ( isset( $response_data['code'] ) && $response_data['code'] == 3000 ) {
+        // Success response, store data in session for later use
+        WC()->session->set( 'account_number', $account_number );
+        WC()->session->set( 'reference_number', $reference_number );
+        WC()->session->set( 'po_number', $po_number );
+        WC()->session->set( 'poster_state', $poster_state );
+        WC()->session->set( 'poster_language', $poster_language );
+        WC()->session->set( 'api_response_data', $response_data );
+    } else {
+        // Error response, add error message
+        $error_message = isset( $response_data['error'] ) ? json_encode( $response_data['error'] ) : 'API error';
+        $errors->add( 'validation', __( 'Order could not be placed: ' . $error_message, 'woocommerce' ) );
+    }
+}
+
+// Hook to create order and use session data
+add_action( 'woocommerce_checkout_create_order', 'woo_create_order_callback', 10, 2 );
+
+function woo_create_order_callback( $order, $data ) {
+    global $wpdb;
+
+    $order_id = $order->get_id();
+
+    // Retrieve data from session
+    $account_number    = WC()->session->get( 'account_number' );
+    $reference_number  = WC()->session->get( 'reference_number' );
+    $po_number         = WC()->session->get( 'po_number' );
+    $poster_state      = WC()->session->get( 'poster_state' );
+    $poster_language   = WC()->session->get( 'poster_language' );
+    $api_response_data = WC()->session->get( 'api_response_data' );
+
+    // Clear session data
+    WC()->session->__unset( 'account_number' );
+    WC()->session->__unset( 'reference_number' );
+    WC()->session->__unset( 'po_number' );
+    WC()->session->__unset( 'poster_state' );
+    WC()->session->__unset( 'poster_language' );
+    WC()->session->__unset( 'api_response_data' );
+
     // Get order status
     $status = $order->get_status();
-
-    // Get custom fields from checkout
-    $account_number   = get_post_meta( $order_id, '_account_number', true );
-    $reference_number = get_post_meta( $order_id, '_reference_number', true );
-    $po_number        = get_post_meta( $order_id, '_po_number', true );
-    $poster_state     = get_post_meta( $order_id, '_poster_state', true );
-    $poster_language  = get_post_meta( $order_id, '_poster_language', true );
 
     // Get order date and format it as MM-dd-YYYY
     $order_date           = $order->get_date_created();
@@ -70,67 +149,9 @@ function woo_create_order_callback( $order_id ) {
     // Insert data into the database
     $wpdb->insert( $table_name, $data );
 
-    // Prepare data for API submission
-    $api_data = array(
-        'Auth_String'             => '525HRD7867200143000',
-        'Account_Number'          => $account_number,
-        'Date_Order_Received'     => $order_date_formatted,
-        'Client_Company'          => $company,
-        'Reference_Number'        => $reference_number,
-        'Unique_ID'               => $unique_id,
-        'PO_Number'               => $po_number,
-        'Client_First_Name'       => $first_name,
-        'Client_Last_Name'        => $last_name,
-        'Client_Street_Address_1' => $address_1,
-        'Client_Street_Address_2' => $address_2,
-        'Client_City'             => $city,
-        'Client_State'            => $state,
-        'Client_ZIP'              => $postcode,
-        'Client_Email_Address'    => $email,
-        'Client_Phone_Number'     => $phone,
-        'Order_Type'              => 'E-Update',
-        'Poster_State'            => $poster_state,
-        'Poster_Language'         => $poster_language,
-    );
-
-    // Send data to the external API
-    $response = wp_remote_post(
-        'https://www.posterelite.com/api/Order_Creation.php',
-        array(
-            'method' => 'POST',
-            'body'   => $api_data,
-        )
-    );
-
-    // Handle the response if needed
-    if ( is_wp_error( $response ) ) {
-        $error_message = $response->get_error_message();
-        error_log( "Order API submission failed: $error_message" );
-        update_post_meta( $order_id, '_api_submission_error', "Order API submission failed: $error_message" );
-        $order->update_status( 'failed', __( 'Order API submission failed.', 'woocommerce' ) );
-    } else {
-        $response_body = wp_remote_retrieve_body( $response );
-        $response_data = json_decode( $response_body, true );
-
-        if ( isset( $response_data['code'] ) && $response_data['code'] == 3001 ) {
-            $error_message = "Order API submission failed: " . implode( ' ', array_column( $response_data['error'], 'alert_message' ) );
-            error_log( $error_message );
-            update_post_meta( $order_id, '_api_submission_error', $error_message );
-            $order->update_status( 'failed', __( 'Order API submission failed.', 'woocommerce' ) );
-        } elseif ( isset( $response_data['code'] ) && $response_data['code'] == 3000 ) {
-            update_post_meta( $order_id, '_api_submission_success', __( 'Order API submission successful.', 'woocommerce' ) );
-            wc_add_notice( __( 'Order API submission successful.', 'woocommerce' ), 'success' );
-        } else {
-            $error_message = "Unexpected API response: $response_body";
-            error_log( $error_message );
-            update_post_meta( $order_id, '_api_submission_error', $error_message );
-            $order->update_status( 'failed', __( 'Order API submission failed.', 'woocommerce' ) );
-        }
-    }
+    // Save the successful API response to order meta
+    update_post_meta( $order_id, '_api_submission_response', json_encode( $api_response_data ) );
 }
-
-// Hook the function to the WooCommerce order status completed action
-add_action( 'woocommerce_thankyou', 'woo_create_order_callback', 10, 1 );
 
 
 // Display API submission messages on the order received page
