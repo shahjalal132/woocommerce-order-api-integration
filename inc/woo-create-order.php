@@ -27,6 +27,8 @@ function woo_create_order_callback( $order_id ) {
 
     // Generate a unique ID (example using order ID and timestamp)
     $unique_id = $order_id . '_' . time();
+    // save order to post-meta
+    update_post_meta( $order_id, '_order_unique_id', $unique_id );
 
     // Prepare data to be sent to the API
     $api_data = [
@@ -38,11 +40,11 @@ function woo_create_order_callback( $order_id ) {
         'Client_City'             => $city,
         'Client_First_Name'       => $first_name,
         'Client_Last_Name'        => $last_name,
-        'Account_Number'          => '60016', // Assuming this is static or retrieved differently
+        'Account_Number'          => $account_number,
         'Client_State'            => $state,
         'Unique_ID'               => $unique_id,
         'Referance_Number'        => $phone,
-        'PO_Number'               => '00254', // Assuming this is static or retrieved differently
+        'PO_Number'               => $po_number,
     ];
 
     $curl = curl_init();
@@ -63,6 +65,8 @@ function woo_create_order_callback( $order_id ) {
     );
 
     $response = curl_exec( $curl );
+
+    put_api_response_data( $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );

@@ -61,6 +61,7 @@ function display_custom_checkout_fields_in_admin( $order ) {
     echo '<p><strong>' . __( 'Account Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_account_number', true ) . '</p>';
     echo '<p><strong>' . __( 'Reference Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_reference_number', true ) . '</p>';
     echo '<p><strong>' . __( 'PO Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_po_number', true ) . '</p>';
+    echo '<p><strong>' . __( 'Order Unique ID' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_order_unique_id', true ) . '</p>';
 }
 
 
