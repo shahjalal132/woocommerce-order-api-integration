@@ -1,21 +1,43 @@
 <?php
 
-function woo_create_order_callback() {
+add_action( 'woocommerce_thankyou', 'woo_create_order_callback', 10, 1 );
 
+function woo_create_order_callback( $order_id ) {
+    if ( !$order_id ) {
+        return;
+    }
+
+    // Get an instance of the WC_Order object
+    $order = wc_get_order( $order_id );
+
+    // Retrieve order data
+    $first_name = $order->get_billing_first_name();
+    $last_name  = $order->get_billing_last_name();
+    $company    = $order->get_billing_company();
+    $address_1  = $order->get_billing_address_1();
+    $city       = $order->get_billing_city();
+    $state      = $order->get_billing_state();
+    $postcode   = $order->get_billing_postcode();
+    $phone      = $order->get_billing_phone();
+
+    // Generate a unique ID (example using order ID and timestamp)
+    $unique_id = $order_id . '_' . time();
+
+    // Prepare data to be sent to the API
     $api_data = [
         'Auth_String'             => '525HRD7867200143000',
-        'Client_ZIP'              => '1230',
+        'Client_ZIP'              => $postcode,
         'Order_Type'              => 'ePoster Service',
-        'Client_Company'          => 'Imjol',
-        'Client_Street_Address_1' => 'Uttara, Dhaka, Bangladesh',
-        'Client_City'             => 'Dhaka',
-        'Client_First_Name'       => 'Shah',
-        'Client_Last_Name'        => 'Jalal',
-        'Account_Number'          => '60016',
-        'Client_State'            => 'Dh',
-        'Unique_ID'               => '44521587',
-        'Referance_Number'        => '01740247505',
-        'PO_Number'               => '00254',
+        'Client_Company'          => $company,
+        'Client_Street_Address_1' => $address_1,
+        'Client_City'             => $city,
+        'Client_First_Name'       => $first_name,
+        'Client_Last_Name'        => $last_name,
+        'Account_Number'          => '60016', // Assuming this is static or retrieved differently
+        'Client_State'            => $state,
+        'Unique_ID'               => $unique_id,
+        'Referance_Number'        => $phone,
+        'PO_Number'               => '00254', // Assuming this is static or retrieved differently
     ];
 
     $curl = curl_init();
@@ -31,18 +53,41 @@ function woo_create_order_callback() {
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => $api_data,
+            CURLOPT_POSTFIELDS     => http_build_query( $api_data ),
         )
     );
 
     $response = curl_exec( $curl );
 
-    curl_close( $curl );
-    echo $response;
+    if ( curl_errno( $curl ) ) {
+        $error_msg = curl_error( $curl );
+        error_log( 'Curl error: ' . $error_msg );
+        $response = 'There was an error processing your request. Please try again.';
+    }
 
+    curl_close( $curl );
+
+    // Log response for debugging purposes
+    error_log( 'API Response: ' . $response );
+
+    // Store the response in a WooCommerce session variable
+    WC()->session->set( 'api_response_message', $response );
 }
 
-add_shortcode( 'woo_create_order', 'woo_create_order_callback' );
+function display_api_response_message() {
+    // Get the response message from the session
+    $response_message = WC()->session->get( 'api_response_message' );
+
+    // Display the response message if it exists
+    if ( $response_message ) {
+        echo '<div class="woocommerce-message">' . esc_html( $response_message ) . '</div>';
+
+        // Clear the session variable to avoid displaying the message again
+        WC()->session->set( 'api_response_message', null );
+    }
+}
+
+add_action( 'woocommerce_thankyou', 'display_api_response_message', 20 );
 
 
 
