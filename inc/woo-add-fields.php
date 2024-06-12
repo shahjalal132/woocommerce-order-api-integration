@@ -3,7 +3,7 @@
 // Add custom checkout fields
 add_action( 'woocommerce_after_order_notes', 'add_custom_checkout_fields' );
 function add_custom_checkout_fields( $checkout ) {
-    echo '<div id="custom_checkout_field"><h2>' . __( 'Custom Fields' ) . '</h2>';
+    echo '<div id="custom_checkout_field"><h2>' . __( 'API Required Fields' ) . '</h2>';
 
     woocommerce_form_field( 'account_number', array(
         'type'        => 'text',
@@ -62,6 +62,15 @@ function display_custom_checkout_fields_in_admin( $order ) {
     echo '<p><strong>' . __( 'Reference Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_reference_number', true ) . '</p>';
     echo '<p><strong>' . __( 'PO Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_po_number', true ) . '</p>';
     echo '<p><strong>' . __( 'Order Unique ID' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_order_unique_id', true ) . '</p>';
+}
+
+// Modify checkout company field to required
+add_filter( 'woocommerce_checkout_fields', 'make_company_field_required' );
+function make_company_field_required( $fields ) {
+    // Make the company field required
+    $fields['billing']['billing_company']['required'] = true;
+
+    return $fields;
 }
 
 
