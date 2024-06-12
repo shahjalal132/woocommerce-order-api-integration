@@ -23,8 +23,7 @@ function woo_order_form_callback() {
         <input type="text" name="Client_Email_Address" placeholder="Client Email Address">
         <input type="text" name="Client_Phone_Number" placeholder="Client Phone Number">
         <select name="Order_Type">
-            <option value="E-Update Service">E-Update</option>
-            <option value="ePoster Service">ePoster</option>
+            <option value="ePoster Service">ePoster Service</option>
         </select>
         <input type="text" name="Poster_State" placeholder="Poster State">
         <input type="text" name="Poster_Language" placeholder="Poster Language">
