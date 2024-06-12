@@ -1,34 +1,25 @@
 <?php
 
-add_action( 'woocommerce_thankyou', 'woo_create_order_callback', 10, 1 );
+// API Process before creating order
+add_action( 'woocommerce_checkout_process', 'validate_order_with_api' );
+function validate_order_with_api() {
 
-function woo_create_order_callback( $order_id ) {
-    if ( !$order_id ) {
-        return;
-    }
+    // Retrieve checkout fields
+    $first_name = sanitize_text_field( $_POST['billing_first_name'] );
+    $last_name  = sanitize_text_field( $_POST['billing_last_name'] );
+    $company    = sanitize_text_field( $_POST['billing_company'] );
+    $address_1  = sanitize_text_field( $_POST['billing_address_1'] );
+    $city       = sanitize_text_field( $_POST['billing_city'] );
+    $state      = sanitize_text_field( $_POST['billing_state'] );
+    $postcode   = sanitize_text_field( $_POST['billing_postcode'] );
 
-    // Get an instance of the WC_Order object
-    $order = wc_get_order( $order_id );
+    // Retrieve custom fields data
+    $account_number   = sanitize_text_field( $_POST['account_number'] );
+    $reference_number = sanitize_text_field( $_POST['reference_number'] );
+    $po_number        = sanitize_text_field( $_POST['po_number'] );
 
-    // Retrieve order data
-    $first_name = $order->get_billing_first_name();
-    $last_name  = $order->get_billing_last_name();
-    $company    = $order->get_billing_company();
-    $address_1  = $order->get_billing_address_1();
-    $city       = $order->get_billing_city();
-    $state      = $order->get_billing_state();
-    $postcode   = $order->get_billing_postcode();
-    $phone      = $order->get_billing_phone();
-
-    // retrieve fields data
-    $account_number   = get_post_meta( $order_id, '_account_number', true );
-    $reference_number = get_post_meta( $order_id, '_reference_number', true ) ?? '';
-    $po_number        = get_post_meta( $order_id, '_po_number', true ) ?? '';
-
-    // Generate a unique ID (example using order ID and timestamp)
-    $unique_id = $order_id . '_' . time();
-    // save order to post-meta
-    update_post_meta( $order_id, '_order_unique_id', $unique_id );
+    // Generate a unique ID (example using current timestamp)
+    $unique_id = 'order_' . time();
 
     // Prepare data to be sent to the API
     $api_data = [
@@ -43,7 +34,7 @@ function woo_create_order_callback( $order_id ) {
         'Account_Number'          => $account_number,
         'Client_State'            => $state,
         'Unique_ID'               => $unique_id,
-        'Referance_Number'        => $phone,
+        'Referance_Number'        => $reference_number,
         'PO_Number'               => $po_number,
     ];
 
@@ -66,37 +57,42 @@ function woo_create_order_callback( $order_id ) {
 
     $response = curl_exec( $curl );
 
-    put_api_response_data( $response );
-
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
         error_log( 'Curl error: ' . $error_msg );
-        $response = 'There was an error processing your request. Please try again.';
+        $response = '{"code":4000,"message":"There was an error processing your request. Please try again."}';
     }
 
     curl_close( $curl );
 
-    // Log response for debugging purposes
-    error_log( 'API Response: ' . $response );
+    // Decode the response
+    $response_data = json_decode( $response, true );
 
-    // Store the response in a WooCommerce session variable
-    WC()->session->set( 'api_response_message', $response );
-}
-
-function display_api_response_message() {
-    // Get the response message from the session
-    $response_message = WC()->session->get( 'api_response_message' );
-
-    // Display the response message if it exists
-    if ( $response_message ) {
-        echo '<div class="woocommerce-message">' . esc_html( $response_message ) . '</div>';
-
-        // Clear the session variable to avoid displaying the message again
-        WC()->session->set( 'api_response_message', null );
+    // Check the response code
+    if ( $response_data['code'] !== 3000 ) {
+        $error_message = $response_data['error'];
+        $error_message = json_encode( $error_message, JSON_PRETTY_PRINT );
+        wc_add_notice( 'API Error: ' . $error_message, 'error' );
+    } else {
+        // Store the unique ID in session for later use (e.g., saving in order meta)
+        WC()->session->set( 'api_unique_id', $unique_id );
     }
 }
 
-add_action( 'woocommerce_thankyou', 'display_api_response_message', 20 );
+// Save unique ID to order
+add_action( 'woocommerce_checkout_create_order', 'save_unique_id_to_order', 20, 2 );
+function save_unique_id_to_order( $order, $data ) {
+    // Get the unique ID from the session
+    $unique_id = WC()->session->get( 'api_unique_id' );
+
+    // Save the unique ID to order meta
+    if ( $unique_id ) {
+        $order->update_meta_data( '_order_unique_id', $unique_id );
+
+        // Clear the session variable
+        WC()->session->set( 'api_unique_id', null );
+    }
+}
 
 
 
