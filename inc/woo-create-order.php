@@ -20,6 +20,11 @@ function woo_create_order_callback( $order_id ) {
     $postcode   = $order->get_billing_postcode();
     $phone      = $order->get_billing_phone();
 
+    // retrieve fields data
+    $account_number   = get_post_meta( $order_id, '_account_number', true );
+    $reference_number = get_post_meta( $order_id, '_reference_number', true ) ?? '';
+    $po_number        = get_post_meta( $order_id, '_po_number', true ) ?? '';
+
     // Generate a unique ID (example using order ID and timestamp)
     $unique_id = $order_id . '_' . time();
 

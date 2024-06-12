@@ -27,22 +27,6 @@ function add_custom_checkout_fields( $checkout ) {
         'placeholder' => __( 'Enter your PO number' ),
     ), $checkout->get_value( 'po_number' ) );
 
-    woocommerce_form_field( 'poster_state', array(
-        'type'        => 'text',
-        'class'       => array( 'form-row-wide' ),
-        'label'       => __( 'Poster State' ),
-        'placeholder' => __( 'Enter your Poster State' ),
-        'required'    => true,
-    ), $checkout->get_value( 'poster_state' ) );
-
-    woocommerce_form_field( 'poster_language', array(
-        'type'        => 'text',
-        'class'       => array( 'form-row-wide' ),
-        'label'       => __( 'Poster Language' ),
-        'placeholder' => __( 'Enter your Poster Language' ),
-        'required'    => true,
-    ), $checkout->get_value( 'poster_language' ) );
-
     echo '</div>';
 }
 
@@ -52,12 +36,6 @@ add_action( 'woocommerce_checkout_process', 'validate_custom_checkout_fields' );
 function validate_custom_checkout_fields() {
     if ( empty( $_POST['account_number'] ) ) {
         wc_add_notice( __( 'Please enter an account number.' ), 'error' );
-    }
-    if ( empty( $_POST['poster_state'] ) ) {
-        wc_add_notice( __( 'Please enter a poster state.' ), 'error' );
-    }
-    if ( empty( $_POST['poster_language'] ) ) {
-        wc_add_notice( __( 'Please enter a poster language.' ), 'error' );
     }
 }
 
@@ -74,12 +52,6 @@ function save_custom_checkout_fields( $order_id ) {
     if ( !empty( $_POST['po_number'] ) ) {
         update_post_meta( $order_id, '_po_number', sanitize_text_field( $_POST['po_number'] ) );
     }
-    if ( !empty( $_POST['poster_state'] ) ) {
-        update_post_meta( $order_id, '_poster_state', sanitize_text_field( $_POST['poster_state'] ) );
-    }
-    if ( !empty( $_POST['poster_language'] ) ) {
-        update_post_meta( $order_id, '_poster_language', sanitize_text_field( $_POST['poster_language'] ) );
-    }
 }
 
 
@@ -89,8 +61,6 @@ function display_custom_checkout_fields_in_admin( $order ) {
     echo '<p><strong>' . __( 'Account Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_account_number', true ) . '</p>';
     echo '<p><strong>' . __( 'Reference Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_reference_number', true ) . '</p>';
     echo '<p><strong>' . __( 'PO Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_po_number', true ) . '</p>';
-    echo '<p><strong>' . __( 'Poster State' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_poster_state', true ) . '</p>';
-    echo '<p><strong>' . __( 'Poster Language' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_poster_language', true ) . '</p>';
 }
 
 
