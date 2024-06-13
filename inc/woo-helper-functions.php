@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Put api response data to filesystem
+ *
+ * @param string $data
+ * @return string
+ */
 function put_api_response_data( $data ) {
     // Ensure directory exists to store response data
     $directory = WOO_ORDER_API_PLUGIN_PATH . '/api_response/';

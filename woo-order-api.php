@@ -29,4 +29,4 @@ require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-add-fields.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-helper-functions.php';
 
 // Create Order table.
-register_activation_hook(__FILE__, 'woo_order_create_table');
+// register_activation_hook(__FILE__, 'woo_order_create_table');
