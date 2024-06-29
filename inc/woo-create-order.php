@@ -1,6 +1,6 @@
 <?php
 
-// API Process before creating order
+// Order Creation API Integration
 add_action( 'woocommerce_checkout_process', 'validate_order_with_api' );
 function validate_order_with_api() {
 
@@ -9,9 +9,12 @@ function validate_order_with_api() {
     $last_name  = sanitize_text_field( $_POST['billing_last_name'] );
     $company    = sanitize_text_field( $_POST['billing_company'] );
     $address_1  = sanitize_text_field( $_POST['billing_address_1'] );
+    $address_2  = sanitize_text_field( $_POST['billing_address_2'] );
     $city       = sanitize_text_field( $_POST['billing_city'] );
     $state      = sanitize_text_field( $_POST['billing_state'] );
     $postcode   = sanitize_text_field( $_POST['billing_postcode'] );
+    $email      = sanitize_email( $_POST['billing_email'] );
+    $phone      = sanitize_text_field( $_POST['billing_phone'] );
 
     // Retrieve custom fields data
     $account_number   = sanitize_text_field( $_POST['account_number'] );
@@ -21,21 +24,31 @@ function validate_order_with_api() {
     // Generate a unique ID (example using current timestamp)
     $unique_id = 'order_' . time();
 
+    // Static data for missing fields
+    $order_received_date = date( 'm-d-Y' ); // current date
+    $order_type          = 'E-Update Service (With Initial All-In-One Poster)';
+    $poster_state        = 'CA';
+    $poster_language     = 'English';
+
     // Prepare data to be sent to the API
     $api_data = [
         'Auth_String'             => '525HRD7867200143000',
-        'Client_ZIP'              => $postcode,
-        'Order_Type'              => 'ePoster Service',
-        'Client_Company'          => $company,
-        'Client_Street_Address_1' => $address_1,
-        'Client_City'             => $city,
+        'Account_Number'          => $account_number ?: '60016',
+        'Date_Order_Received'     => $order_received_date,
+        'Client_Company'          => $company ?: 'Imjol IT',
+        'Unique_ID'               => $unique_id,
         'Client_First_Name'       => $first_name,
         'Client_Last_Name'        => $last_name,
-        'Account_Number'          => $account_number,
+        'Client_Street_Address_1' => $address_1,
+        'Client_Street_Address_2' => $address_2 ?: 'STE 207',
+        'Client_City'             => $city,
         'Client_State'            => $state,
-        'Unique_ID'               => $unique_id,
-        'Referance_Number'        => $reference_number,
-        'PO_Number'               => $po_number,
+        'Client_ZIP'              => $postcode,
+        'Client_Email_Address'    => $email ?: 'ffshahjalal@gmail.com',
+        'Client_Phone_Number'     => $phone ?: '916-555-1212',
+        'Order_Type'              => $order_type,
+        'Poster_State'            => $poster_state,
+        'Poster_Language'         => $poster_language,
     ];
 
     $curl = curl_init();
@@ -57,6 +70,8 @@ function validate_order_with_api() {
 
     $response = curl_exec( $curl );
 
+    put_api_response_data( $response );
+
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
         error_log( 'Curl error: ' . $error_msg );
@@ -70,7 +85,7 @@ function validate_order_with_api() {
 
     // Check the response code
     if ( $response_data['code'] !== 3000 ) {
-        $error_message = $response_data['error'];
+        $error_message = $response_data['message'];
         $error_message = json_encode( $error_message, JSON_PRETTY_PRINT );
         wc_add_notice( 'API Error: ' . $error_message, 'error' );
     } else {
@@ -78,6 +93,7 @@ function validate_order_with_api() {
         WC()->session->set( 'api_unique_id', $unique_id );
     }
 }
+
 
 // Save unique ID to order
 add_action( 'woocommerce_checkout_create_order', 'save_unique_id_to_order', 20, 2 );
