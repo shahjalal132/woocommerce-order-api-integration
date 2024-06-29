@@ -27,27 +27,26 @@ function validate_order_with_api() {
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
     $order_type          = 'E-Update Service (With Initial All-In-One Poster)';
-    $poster_state        = 'CA';
     $poster_language     = 'English';
 
     // Prepare data to be sent to the API
     $api_data = [
         'Auth_String'             => '525HRD7867200143000',
-        'Account_Number'          => $account_number ?: '60016',
+        'Account_Number'          => $account_number,
         'Date_Order_Received'     => $order_received_date,
-        'Client_Company'          => $company ?: 'Imjol IT',
+        'Client_Company'          => $company,
         'Unique_ID'               => $unique_id,
         'Client_First_Name'       => $first_name,
         'Client_Last_Name'        => $last_name,
         'Client_Street_Address_1' => $address_1,
-        'Client_Street_Address_2' => $address_2 ?: 'STE 207',
+        'Client_Street_Address_2' => $address_2,
         'Client_City'             => $city,
         'Client_State'            => $state,
         'Client_ZIP'              => $postcode,
-        'Client_Email_Address'    => $email ?: 'ffshahjalal@gmail.com',
-        'Client_Phone_Number'     => $phone ?: '916-555-1212',
+        'Client_Email_Address'    => $email,
+        'Client_Phone_Number'     => $phone,
         'Order_Type'              => $order_type,
-        'Poster_State'            => $poster_state,
+        'Poster_State'            => $state,
         'Poster_Language'         => $poster_language,
     ];
 
@@ -69,8 +68,6 @@ function validate_order_with_api() {
     );
 
     $response = curl_exec( $curl );
-
-    put_api_response_data( $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
@@ -112,7 +109,7 @@ function save_unique_id_to_order( $order, $data ) {
 
 
 
-// Function to update the status in the custom table
+// Function to update the status and perform order cancellation api call
 function woo_update_order_status( $order_id, $old_status, $new_status ) {
 
     // Check if the status is changing from "processing" to "cancelled"
@@ -152,9 +149,6 @@ function woo_update_order_status( $order_id, $old_status, $new_status ) {
         );
 
         $response = curl_exec( $curl );
-
-        put_api_response_data( $response );
-
         curl_close( $curl );
     }
 }
