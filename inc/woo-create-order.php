@@ -114,17 +114,48 @@ function save_unique_id_to_order( $order, $data ) {
 
 // Function to update the status in the custom table
 function woo_update_order_status( $order_id, $old_status, $new_status ) {
-    global $wpdb;
 
     // Check if the status is changing from "processing" to "cancelled"
     if ( $old_status === 'processing' && $new_status === 'cancelled' ) {
-        // Prepare data for update
-        $table_name = $wpdb->prefix . 'woai_orders';
-        $data       = array( 'status' => $new_status );
-        $where      = array( 'order_id' => $order_id );
 
-        // Update the status in the custom table
-        $wpdb->update( $table_name, $data, $where );
+        // Retrieve the account number and unique ID from the order meta
+        $account_number = get_post_meta( $order_id, '_account_number', true );
+        $unique_id      = get_post_meta( $order_id, '_order_unique_id', true );
+
+        // If the account number or unique ID is not found, log an error and return
+        if ( empty( $account_number ) || empty( $unique_id ) ) {
+            return;
+        }
+
+        // Prepare data to be sent to the API
+        $api_data = [
+            'Auth_String'    => '525HRD7867200143000',
+            'Account_Number' => $account_number,
+            'Unique_ID'      => $unique_id,
+        ];
+
+        $curl = curl_init();
+
+        curl_setopt_array(
+            $curl,
+            array(
+                CURLOPT_URL            => 'https://www.posterelite.com/api/Order_Cancellation.php',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_ENCODING       => '',
+                CURLOPT_MAXREDIRS      => 10,
+                CURLOPT_TIMEOUT        => 0,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST  => 'POST',
+                CURLOPT_POSTFIELDS     => http_build_query( $api_data ),
+            )
+        );
+
+        $response = curl_exec( $curl );
+
+        put_api_response_data( $response );
+
+        curl_close( $curl );
     }
 }
 

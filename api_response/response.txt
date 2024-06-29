@@ -1,3 +1,6 @@
 {"code":3000,"data":{"Record_ID":"","Error_Log":"","Order_Number":"2024-06-28-1679062","ID":"525723000260586020"},"message":"Data Added Successfully"} - 2024-06-29 06:23:19
 {"code":3000,"data":{"Record_ID":"","Error_Log":"","Order_Number":"2024-06-28-1679063","ID":"525723000260566046"},"message":"Data Added Successfully"} - 2024-06-29 06:32:28
 {"code":3000,"data":{"Record_ID":"","Error_Log":"","Order_Number":"2024-06-28-1679064","ID":"525723000260579059"},"message":"Data Added Successfully"} - 2024-06-29 06:36:54
+Order cancellation error: Missing account number or unique ID. - 2024-06-29 06:53:54
+{"code":3000,"data":{"ID":"525723000260593018"},"message":"Data Added Successfully"} - 2024-06-29 06:58:35
+Order 115 successfully cancelled with API. - 2024-06-29 06:58:35
