@@ -56,13 +56,13 @@ function save_custom_checkout_fields( $order_id ) {
 
 
 // Display Custom Fields in Order Admin
-add_action( 'woocommerce_admin_order_data_after_billing_address', 'display_custom_checkout_fields_in_admin', 10, 1 );
+/* add_action( 'woocommerce_admin_order_data_after_billing_address', 'display_custom_checkout_fields_in_admin', 10, 1 );
 function display_custom_checkout_fields_in_admin( $order ) {
     // echo '<p><strong>' . __( 'Account Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_account_number', true ) . '</p>';
     // echo '<p><strong>' . __( 'Reference Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_reference_number', true ) . '</p>';
     // echo '<p><strong>' . __( 'PO Number' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_po_number', true ) . '</p>';
-    echo '<p><strong>' . __( 'Order Unique ID' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_order_unique_id', true ) . '</p>';
-}
+    // echo '<p><strong>' . __( 'Order Unique ID' ) . ':</strong> ' . get_post_meta( $order->get_id(), '_order_unique_id', true ) . '</p>';
+} */
 
 // Modify checkout company field to required
 add_filter( 'woocommerce_checkout_fields', 'make_company_field_required' );
@@ -71,6 +71,37 @@ function make_company_field_required( $fields ) {
     $fields['billing']['billing_company']['required'] = true;
 
     return $fields;
+}
+
+// Add custom field to the edit order form
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'add_custom_field_to_edit_order_form' );
+function add_custom_field_to_edit_order_form( $order ) {
+    $reference_number = get_post_meta( $order->get_id(), '_reference_number', true );
+    ?>
+    <div class="form-field form-field-wide">
+        <label for="reference_number"><?php _e( 'Reference Number', 'woocommerce' ); ?></label>
+        <input type="text" name="reference_number" id="reference_number" placeholder="Enter your reference number"
+            value="<?php echo esc_attr( $reference_number ); ?>" required>
+    </div>
+    <?php
+}
+
+// Validate the custom field before saving the order
+add_action( 'woocommerce_admin_order_data_before_save', 'validate_custom_field_before_save', 10, 1 );
+function validate_custom_field_before_save( $order ) {
+    if ( isset( $_POST['reference_number'] ) && empty( $_POST['reference_number'] ) ) {
+        wc_add_notice( __( 'Reference Number is a required field.', 'woocommerce' ), 'error' );
+        // Stop the order from being saved
+        remove_action( 'woocommerce_process_shop_order_meta', 'save_custom_field_value' );
+    }
+}
+
+// Save the custom field value when the order is updated
+add_action( 'woocommerce_process_shop_order_meta', 'save_custom_field_value' );
+function save_custom_field_value( $order_id ) {
+    if ( isset( $_POST['reference_number'] ) ) {
+        update_post_meta( $order_id, '_reference_number', sanitize_text_field( $_POST['reference_number'] ) );
+    }
 }
 
 
