@@ -230,3 +230,117 @@ function woa_update_order_with_api( $order_id, $items ) {
 // Hook into the order save action after items are saved
 add_action( 'woocommerce_update_order', 'woa_update_order_with_api', 10, 2 );
 
+
+// Hook into the order edit page to display additional information
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
+function woa_display_order_details_from_api( $order ) {
+    // Get the order ID
+    $order_id = $order->get_id();
+
+    // Make the API call to retrieve order details
+    $api_response = make_api_call_for_order_details( $order_id );
+
+    if ( $api_response && $api_response['code'] === 3000 ) {
+        $order_data = $api_response['data'][0];
+
+        // Display the retrieved information in a table view
+        $html = <<<EOD
+        <div class="order_details_from_api">
+            <h2>Order Details from API</h2>
+            <table>
+                <tr>
+                    <th>Date Order Received</th>
+                    <td>{$order_data['Date_Order_Received']}</td>
+                </tr>
+                <tr>
+                    <th>Street Address 1</th>
+                    <td>{$order_data['Subform_ID.Client_Street_Address_1']}</td>
+                </tr>
+                <tr>
+                    <th>Street Address 2</th>
+                    <td>{$order_data['Subform_ID.Client_Street_Address_2']}</td>
+                </tr>
+                <tr>
+                    <th>ZIP Code</th>
+                    <td>{$order_data['Subform_ID.Zip_Code']}</td>
+                </tr>
+                <tr>
+                    <th>City</th>
+                    <td>{$order_data['Subform_ID.Client_City1']}</td>
+                </tr>
+                <tr>
+                    <th>State</th>
+                    <td>{$order_data['Subform_ID.Client_State1']}</td>
+                </tr>
+                <tr>
+                    <th>Company</th>
+                    <td>{$order_data['Subform_ID.Client_Company']}</td>
+                </tr>
+                <tr>
+                    <th>First Name</th>
+                    <td>{$order_data['Subform_ID.Client_First_Name']}</td>
+                </tr>
+                <tr>
+                    <th>Last Name</th>
+                    <td>{$order_data['Subform_ID.Client_Last_Name']}</td>
+                </tr>
+                <tr>
+                    <th>Order Type</th>
+                    <td>{$order_data['Poster_Order_Type.Poster_Order_Type']}</td>
+                </tr>
+                <tr>
+                    <th>Poster Language</th>
+                    <td>{$order_data['Poster_Language']}</td>
+                </tr>
+                <tr>
+                    <th>Order Unique Number</th>
+                    <td>{$order_data['Subform_ID.Reference_Number']}</td>
+                </tr>
+            </table>
+        </div>
+        EOD;
+
+        echo $html;
+    }
+}
+
+function make_api_call_for_order_details( $order_id ) {
+    $order_number   = '2024-06-29-1679218'; // Replace with dynamic order number logic if needed
+    $account_number = '60016'; // Replace with dynamic account number logic if needed
+
+    $curl = curl_init();
+
+    curl_setopt_array(
+        $curl,
+        array(
+            CURLOPT_URL            => 'https://www.posterelite.com/api/Order_Details.php',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'POST',
+            CURLOPT_POSTFIELDS     => array(
+                'Auth_String'    => '525HRD7867200143000',
+                'Account_Number' => $account_number,
+                'order_number'   => $order_number,
+                'status'         => '',
+                'start_index'    => '0',
+            ),
+        )
+    );
+
+    $response = curl_exec( $curl );
+
+    if ( curl_errno( $curl ) ) {
+        $error_msg = curl_error( $curl );
+        error_log( 'Curl error: ' . $error_msg );
+        curl_close( $curl );
+        return false;
+    }
+
+    curl_close( $curl );
+
+    return json_decode( $response, true );
+}

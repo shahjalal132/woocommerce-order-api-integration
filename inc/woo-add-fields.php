@@ -78,7 +78,7 @@ add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_add_custo
 function woa_add_custom_field_to_edit_order_form( $order ) {
     $reference_number = get_post_meta( $order->get_id(), '_reference_number', true );
     ?>
-    <div class="form-field form-field-wide">
+    <div class="form-field form-field-wide" style="margin-bottom: 20px;">
         <label for="reference_number"><?php _e( 'Reference Number', 'woocommerce' ); ?></label>
         <input type="text" name="reference_number" id="reference_number" placeholder="Enter your reference number"
             value="<?php echo esc_attr( $reference_number ); ?>" required>
