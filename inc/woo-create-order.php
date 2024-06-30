@@ -17,9 +17,11 @@ function validate_order_with_api() {
     $phone      = sanitize_text_field( $_POST['billing_phone'] );
 
     // Retrieve custom fields data
-    $account_number   = sanitize_text_field( $_POST['account_number'] );
+    /* $account_number   = sanitize_text_field( $_POST['account_number'] );
     $reference_number = sanitize_text_field( $_POST['reference_number'] );
-    $po_number        = sanitize_text_field( $_POST['po_number'] );
+    $po_number        = sanitize_text_field( $_POST['po_number'] ); */
+
+    $account_number = '60016';
 
     // Generate a unique ID (example using current timestamp)
     $unique_id = 'order_' . time();
@@ -116,7 +118,8 @@ function woo_update_order_status( $order_id, $old_status, $new_status ) {
     if ( $old_status === 'processing' && $new_status === 'cancelled' ) {
 
         // Retrieve the account number and unique ID from the order meta
-        $account_number = get_post_meta( $order_id, '_account_number', true );
+        $account_number = '60016';
+        // $account_number = get_post_meta( $order_id, '_account_number', true );
         $unique_id      = get_post_meta( $order_id, '_order_unique_id', true );
 
         // If the account number or unique ID is not found, log an error and return
