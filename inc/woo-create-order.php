@@ -233,28 +233,6 @@ function update_order_with_api( $order_id, $items ) {
 
     $response = curl_exec( $curl );
 
-    put_api_response_data( $response );
-
-    if ( curl_errno( $curl ) ) {
-        $error_msg = curl_error( $curl );
-        error_log( 'Curl error: ' . $error_msg );
-        put_api_response_data( 'Curl error: ' . $error_msg );
-    }
-
     curl_close( $curl );
-
-    // Decode the response
-    $response_data = json_decode( $response, true );
-
-    // Check the response code
-    if ( $response_data['code'] !== 3000 ) {
-        $error_message = $response_data['message'];
-        error_log( 'API Error: ' . json_encode( $error_message, JSON_PRETTY_PRINT ) );
-        put_api_response_data( 'API Error: ' . json_encode( $error_message, JSON_PRETTY_PRINT ) );
-    } else {
-        // Successfully updated the order
-        error_log( 'Order ' . $order_id . ' successfully updated with API.' );
-        put_api_response_data( 'Order ' . $order_id . ' successfully updated with API.' );
-    }
 }
 
