@@ -1,6 +1,6 @@
 <?php
 
-function woa_validate_order_with_api() {
+function woa_create_order_with_api() {
 
     // Retrieve checkout fields
     $first_name = sanitize_text_field( $_POST['billing_first_name'] );
@@ -79,6 +79,8 @@ function woa_validate_order_with_api() {
 
     // Decode the response
     $response_data = json_decode( $response, true );
+    // extract order_number from response
+    $order_number = $response_data['data']['Order_Number'];
 
     // Check the response code
     if ( $response_data['code'] !== 3000 ) {
@@ -86,23 +88,29 @@ function woa_validate_order_with_api() {
         $error_message = json_encode( $error_message, JSON_PRETTY_PRINT );
         wc_add_notice( 'API Error: ' . $error_message, 'error' );
     } else {
-        // Store the unique ID in session for later use (e.g., saving in order meta)
+        // Store the unique ID in session for later use
         WC()->session->set( 'api_unique_id', $unique_id );
+        // store order number in session
+        WC()->session->set( 'woa_order_number', $order_number );
     }
 }
 // Order Creation API Integration
-add_action( 'woocommerce_checkout_process', 'woa_validate_order_with_api' );
+add_action( 'woocommerce_checkout_process', 'woa_create_order_with_api' );
 
 function woa_save_unique_id_to_order( $order, $data ) {
     // Get the unique ID from the session
     $unique_id = WC()->session->get( 'api_unique_id' );
+    // Get order number from session
+    $order_number = WC()->session->get( 'woa_order_number' );
 
-    // Save the unique ID to order meta
-    if ( $unique_id ) {
+    // Save the unique ID and order number to order meta
+    if ( $unique_id && $order_number ) {
         $order->update_meta_data( '_order_unique_id', $unique_id );
+        $order->update_meta_data( '_woa_order_number', $order_number );
 
-        // Clear the session variable
+        // Clear the session variables
         WC()->session->set( 'api_unique_id', null );
+        WC()->session->set( 'woa_order_number', null );
     }
 }
 // Save unique ID to order
@@ -234,11 +242,15 @@ add_action( 'woocommerce_update_order', 'woa_update_order_with_api', 10, 2 );
 // Hook into the order edit page to display additional information
 add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
 function woa_display_order_details_from_api( $order ) {
+
     // Get the order ID
     $order_id = $order->get_id();
+    // Get the order number from order meta
+    $order_number   = $order->get_meta( '_woa_order_number' );
+    $account_number = '60016';
 
     // Make the API call to retrieve order details
-    $api_response = make_api_call_for_order_details( $order_id );
+    $api_response = woa_make_api_call_for_order_details( $order_id, $account_number, $order_number );
 
     if ( $api_response && $api_response['code'] === 3000 ) {
         $order_data = $api_response['data'][0];
@@ -304,9 +316,7 @@ function woa_display_order_details_from_api( $order ) {
     }
 }
 
-function make_api_call_for_order_details( $order_id ) {
-    $order_number   = '2024-06-29-1679218'; // Replace with dynamic order number logic if needed
-    $account_number = '60016'; // Replace with dynamic account number logic if needed
+function woa_make_api_call_for_order_details( $order_id, $account_number, $order_number ) {
 
     $curl = curl_init();
 
