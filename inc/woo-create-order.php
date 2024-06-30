@@ -1,8 +1,6 @@
 <?php
 
-// Order Creation API Integration
-add_action( 'woocommerce_checkout_process', 'validate_order_with_api' );
-function validate_order_with_api() {
+function woa_validate_order_with_api() {
 
     // Retrieve checkout fields
     $first_name = sanitize_text_field( $_POST['billing_first_name'] );
@@ -92,11 +90,10 @@ function validate_order_with_api() {
         WC()->session->set( 'api_unique_id', $unique_id );
     }
 }
+// Order Creation API Integration
+add_action( 'woocommerce_checkout_process', 'woa_validate_order_with_api' );
 
-
-// Save unique ID to order
-add_action( 'woocommerce_checkout_create_order', 'save_unique_id_to_order', 20, 2 );
-function save_unique_id_to_order( $order, $data ) {
+function woa_save_unique_id_to_order( $order, $data ) {
     // Get the unique ID from the session
     $unique_id = WC()->session->get( 'api_unique_id' );
 
@@ -108,11 +105,10 @@ function save_unique_id_to_order( $order, $data ) {
         WC()->session->set( 'api_unique_id', null );
     }
 }
+// Save unique ID to order
+add_action( 'woocommerce_checkout_create_order', 'woa_save_unique_id_to_order', 20, 2 );
 
-
-
-// Function to update the status and perform order cancellation api call
-function woo_update_order_status( $order_id, $old_status, $new_status ) {
+function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
 
     // Check if the status is changing from "processing" to "cancelled"
     if ( $old_status === 'processing' && $new_status === 'cancelled' ) {
@@ -155,14 +151,10 @@ function woo_update_order_status( $order_id, $old_status, $new_status ) {
         curl_close( $curl );
     }
 }
-
 // Hook the function to the WooCommerce order status changed action
-add_action( 'woocommerce_order_status_changed', 'woo_update_order_status', 10, 3 );
+add_action( 'woocommerce_order_status_changed', 'woa_woo_update_order_status', 10, 3 );
 
-
-// Hook into the order save action after items are saved
-add_action( 'woocommerce_update_order', 'update_order_with_api', 10, 2 );
-function update_order_with_api( $order_id, $items ) {
+function woa_update_order_with_api( $order_id, $items ) {
     // Get the order object
     $order = wc_get_order( $order_id );
 
@@ -235,4 +227,6 @@ function update_order_with_api( $order_id, $items ) {
 
     curl_close( $curl );
 }
+// Hook into the order save action after items are saved
+add_action( 'woocommerce_update_order', 'woa_update_order_with_api', 10, 2 );
 
