@@ -22,11 +22,6 @@ if ( !defined( 'WOO_ORDER_API_PLUGIN_URL' ) ) {
 }
 
 // Include files
-require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-table-create.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-create-order.php';
-require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-order-form.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-add-fields.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-helper-functions.php';
-
-// Create Order table.
-// register_activation_hook(__FILE__, 'woo_order_create_table');
