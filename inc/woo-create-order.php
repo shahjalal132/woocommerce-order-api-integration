@@ -2,6 +2,25 @@
 
 function woa_create_order_with_api() {
 
+    // Get the WooCommerce cart object
+    $cart = WC()->cart;
+
+    // Initialize the poster language variable
+    $poster_language = 'English'; // default value
+
+    // Check if the cart is not empty
+    if ( !$cart->is_empty() ) {
+        // Loop through cart items
+        foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
+            // Check if the cart item has the desired variation attribute
+            if ( isset( $cart_item['variation']['attribute_pa_language'] ) ) {
+                // Set the poster language to the attribute value
+                $poster_language = sanitize_text_field( $cart_item['variation']['attribute_pa_language'] );
+                break; // Stop the loop after finding the first match
+            }
+        }
+    }
+
     // Retrieve checkout fields
     $first_name = sanitize_text_field( $_POST['billing_first_name'] );
     $last_name  = sanitize_text_field( $_POST['billing_last_name'] );
@@ -20,7 +39,6 @@ function woa_create_order_with_api() {
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
     $order_type          = 'E-Update Service (With Initial All-In-One Poster)';
-    $poster_language     = 'English';
 
     // Prepare data to be sent to the API
     $api_data = [
@@ -42,6 +60,9 @@ function woa_create_order_with_api() {
         'Poster_State'            => $state,
         'Poster_Language'         => $poster_language,
     ];
+
+    // put_api_response_data(json_encode($api_data));
+    // die();
 
     $curl = curl_init();
 
@@ -118,6 +139,8 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
         $order     = wc_get_order( $order_id );
         $unique_id = $order->get_meta( '_order_unique_id', true );
 
+        put_api_response_data( $unique_id );
+
         // Prepare data to be sent to the API
         $api_data = [
             'Auth_String'    => '525HRD7867200143000',
@@ -143,6 +166,7 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
         );
 
         $response = curl_exec( $curl );
+        put_api_response_data( 'Cancel API' . $response );
         curl_close( $curl );
     }
 }
@@ -220,6 +244,7 @@ function woa_update_order_with_api( $order_id, $items ) {
     );
 
     $response = curl_exec( $curl );
+    put_api_response_data( 'Update API' . $response );
     curl_close( $curl );
 }
 // Hook into the order save action after items are saved
