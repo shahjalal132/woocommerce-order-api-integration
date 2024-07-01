@@ -14,14 +14,7 @@ function woa_create_order_with_api() {
     $email      = sanitize_email( $_POST['billing_email'] );
     $phone      = sanitize_text_field( $_POST['billing_phone'] );
 
-    // Retrieve custom fields data
-    /* $account_number   = sanitize_text_field( $_POST['account_number'] );
-    $reference_number = sanitize_text_field( $_POST['reference_number'] );
-    $po_number        = sanitize_text_field( $_POST['po_number'] ); */
-
-    $account_number = '60016';
-
-    // Generate a unique ID (example using current timestamp)
+    // Generate a unique ID
     $unique_id = 'order_' . time();
 
     // Static data for missing fields
@@ -32,7 +25,7 @@ function woa_create_order_with_api() {
     // Prepare data to be sent to the API
     $api_data = [
         'Auth_String'             => '525HRD7867200143000',
-        'Account_Number'          => $account_number,
+        'Account_Number'          => '60016',
         'Date_Order_Received'     => $order_received_date,
         'Client_Company'          => $company,
         'Unique_ID'               => $unique_id,

@@ -6,7 +6,7 @@
  * Author:      Shah jalal
  * Author URI:  https://github.com/shahjalal132
  * Description: Order api integration with Posterlite platform
- * Version:     0.1.0
+ * Version:     1.0.0
  */
 
 defined( "ABSPATH" ) || exit( "Direct Access Not Allowed" );
