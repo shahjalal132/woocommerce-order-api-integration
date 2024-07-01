@@ -91,7 +91,7 @@ function woa_create_order_with_api() {
         // Store the unique ID in session for later use
         WC()->session->set( 'api_unique_id', $unique_id );
         // store order number in session
-        WC()->session->set( 'woa_order_number', $order_number );
+        WC()->session->set( 'woa_order_number', $order_number );   
     }
 }
 // Order Creation API Integration
@@ -123,13 +123,10 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
 
         // Retrieve the account number and unique ID from the order meta
         $account_number = '60016';
-        // $account_number = get_post_meta( $order_id, '_account_number', true );
-        $unique_id = get_post_meta( $order_id, '_order_unique_id', true );
 
-        // If the account number or unique ID is not found, log an error and return
-        if ( empty( $account_number ) || empty( $unique_id ) ) {
-            return;
-        }
+        // get order unique number from order meta
+        $order = wc_get_order( $order_id );
+        $unique_id = $order->get_meta( '_order_unique_id', true );
 
         // Prepare data to be sent to the API
         $api_data = [
