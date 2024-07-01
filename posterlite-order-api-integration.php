@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Plugin Name: Woo Order API Integration
- * Plugin URI:  #
+ * Plugin Name: Posterelite Order API Integration
+ * Plugin URI:  https://github.com/shahjalal132/woocommerce-order-api-integration
  * Author:      Shah jalal
  * Author URI:  https://github.com/shahjalal132
- * Description: This plugin does wonders
+ * Description: Order api integration with Posterlite platform
  * Version:     0.1.0
  */
 
