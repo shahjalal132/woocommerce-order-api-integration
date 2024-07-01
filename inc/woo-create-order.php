@@ -184,8 +184,8 @@ function woa_update_order_with_api( $order_id, $items ) {
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
     // $order_received_date = '06-30-2024';
-    $order_type          = 'Poster Replacement Solution (With Initial All-In-One Poster)';
-    $poster_language     = 'English';
+    $order_type      = 'Poster Replacement Solution (With Initial All-In-One Poster)';
+    $poster_language = 'English';
 
     // Prepare data to be sent to the API
     $api_data = [
@@ -234,7 +234,7 @@ add_action( 'woocommerce_update_order', 'woa_update_order_with_api', 10, 2 );
 
 
 // Hook into the order edit page to display additional information
-/* add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
 function woa_display_order_details_from_api( $order ) {
 
     // Get the order ID
@@ -252,11 +252,15 @@ function woa_display_order_details_from_api( $order ) {
         // Display the retrieved information in a table view
         $html = <<<EOD
         <div class="order_details_from_api">
-            <h2>Order Details from API</h2>
-            <table>
+            <h2>Order Details From API</h2>
+            <table style="text-align:left">
                 <tr>
-                    <th>Date Order Received</th>
-                    <td>{$order_data['Date_Order_Received']}</td>
+                    <th>First Name</th>
+                    <td>{$order_data['Subform_ID.Client_First_Name']}</td>
+                </tr>
+                <tr>
+                    <th>Last Name</th>
+                    <td>{$order_data['Subform_ID.Client_Last_Name']}</td>
                 </tr>
                 <tr>
                     <th>Street Address 1</th>
@@ -283,24 +287,24 @@ function woa_display_order_details_from_api( $order ) {
                     <td>{$order_data['Subform_ID.Client_Company']}</td>
                 </tr>
                 <tr>
-                    <th>First Name</th>
-                    <td>{$order_data['Subform_ID.Client_First_Name']}</td>
-                </tr>
-                <tr>
-                    <th>Last Name</th>
-                    <td>{$order_data['Subform_ID.Client_Last_Name']}</td>
-                </tr>
-                <tr>
-                    <th>Order Type</th>
-                    <td>{$order_data['Poster_Order_Type.Poster_Order_Type']}</td>
+                    <th>Order Received Date</th>
+                    <td>{$order_data['Date_Order_Received']}</td>
                 </tr>
                 <tr>
                     <th>Poster Language</th>
                     <td>{$order_data['Poster_Language']}</td>
                 </tr>
                 <tr>
-                    <th>Order Unique Number</th>
+                    <th>Order Number</th>
+                    <td>{$order_data['Order_Number']}</td>
+                </tr>
+                <tr>
+                    <th>Order Unique ID</th>
                     <td>{$order_data['Subform_ID.Reference_Number']}</td>
+                </tr>
+                <tr>
+                    <th>Status</th>
+                    <td>{$order_data['Subform_ID.Order_Status']}</td>
                 </tr>
             </table>
         </div>
@@ -348,4 +352,4 @@ function woa_make_api_call_for_order_details( $order_id, $account_number, $order
     curl_close( $curl );
 
     return json_decode( $response, true );
-} */
+}
