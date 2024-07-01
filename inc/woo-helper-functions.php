@@ -14,7 +14,7 @@ function put_api_response_data( $data ) {
     }
 
     // Construct file path for response data
-    $fileName = $directory . 'response.txt';
+    $fileName = $directory . 'response.log';
 
     // Get the current date and time
     $current_datetime = date( 'Y-m-d H:i:s' );
