@@ -23,7 +23,7 @@ function put_api_response_data( $data ) {
     $data = $data . ' - ' . $current_datetime;
 
     // Append new response data to the existing file
-    if ( file_put_contents( $fileName, $data . PHP_EOL, FILE_APPEND | LOCK_EX ) !== false ) {
+    if ( file_put_contents( $fileName, $data . "\n\n", FILE_APPEND | LOCK_EX ) !== false ) {
         return "Data appended to file successfully.";
     } else {
         return "Failed to append data to file.";

@@ -82,6 +82,7 @@ function woa_create_order_with_api() {
     );
 
     $response = curl_exec( $curl );
+    put_api_response_data( 'Create API: ' . $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
@@ -106,6 +107,8 @@ function woa_create_order_with_api() {
         WC()->session->set( 'api_unique_id', $unique_id );
         // store order number in session
         WC()->session->set( 'woa_order_number', $order_number );
+        // store poster language in session
+        WC()->session->set( 'poster_language', $poster_language );
     }
 }
 // Order Creation API Integration
@@ -116,15 +119,19 @@ function woa_save_unique_id_to_order( $order, $data ) {
     $unique_id = WC()->session->get( 'api_unique_id' );
     // Get order number from session
     $order_number = WC()->session->get( 'woa_order_number' );
+    // Get poster language from session
+    $poster_language = WC()->session->get( 'poster_language' );
 
     // Save the unique ID and order number to order meta
     if ( $unique_id && $order_number ) {
         $order->update_meta_data( '_order_unique_id', $unique_id );
         $order->update_meta_data( '_woa_order_number', $order_number );
+        $order->update_meta_data( '_poster_language', $poster_language );
 
         // Clear the session variables
         WC()->session->set( 'api_unique_id', null );
         WC()->session->set( 'woa_order_number', null );
+        WC()->session->set( 'poster_language', null );
     }
 }
 // Save unique ID to order
@@ -138,8 +145,6 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
         // get order unique number from order meta
         $order     = wc_get_order( $order_id );
         $unique_id = $order->get_meta( '_order_unique_id', true );
-
-        put_api_response_data( $unique_id );
 
         // Prepare data to be sent to the API
         $api_data = [
@@ -166,7 +171,6 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
         );
 
         $response = curl_exec( $curl );
-        put_api_response_data( 'Cancel API' . $response );
         curl_close( $curl );
     }
 }
@@ -197,12 +201,11 @@ function woa_update_order_with_api( $order_id, $items ) {
     // Retrieve custom fields data if available
     $reference_number = get_post_meta( $order_id, '_reference_number', true );
     $unique_id        = $order->get_meta( '_order_unique_id', true );
+    $poster_language  = $order->get_meta( '_poster_language', true );
 
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
-    // $order_received_date = '06-30-2024';
-    $order_type      = 'Poster Replacement Solution (With Initial All-In-One Poster)';
-    $poster_language = 'English';
+    $order_type          = 'Poster Replacement Solution (With Initial All-In-One Poster)';
 
     // Prepare data to be sent to the API
     $api_data = [
@@ -226,6 +229,8 @@ function woa_update_order_with_api( $order_id, $items ) {
         'Poster_Language'         => $poster_language,
     ];
 
+    // put_api_response_data( json_encode( $api_data ) );
+
     $curl = curl_init();
 
     curl_setopt_array(
@@ -244,7 +249,7 @@ function woa_update_order_with_api( $order_id, $items ) {
     );
 
     $response = curl_exec( $curl );
-    put_api_response_data( 'Update API' . $response );
+    put_api_response_data( 'Update API: ' . $response );
     curl_close( $curl );
 }
 // Hook into the order save action after items are saved
