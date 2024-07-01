@@ -91,7 +91,7 @@ function woa_create_order_with_api() {
         // Store the unique ID in session for later use
         WC()->session->set( 'api_unique_id', $unique_id );
         // store order number in session
-        WC()->session->set( 'woa_order_number', $order_number );   
+        WC()->session->set( 'woa_order_number', $order_number );
     }
 }
 // Order Creation API Integration
@@ -118,20 +118,17 @@ add_action( 'woocommerce_checkout_create_order', 'woa_save_unique_id_to_order', 
 
 function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
 
-    // Check if the status is changing from "processing" to "cancelled"
-    if ( $old_status === 'processing' && $new_status === 'cancelled' ) {
-
-        // Retrieve the account number and unique ID from the order meta
-        $account_number = '60016';
+    // Check if the status is changing to "cancelled"
+    if ( $new_status === 'cancelled' ) {
 
         // get order unique number from order meta
-        $order = wc_get_order( $order_id );
+        $order     = wc_get_order( $order_id );
         $unique_id = $order->get_meta( '_order_unique_id', true );
 
         // Prepare data to be sent to the API
         $api_data = [
             'Auth_String'    => '525HRD7867200143000',
-            'Account_Number' => $account_number,
+            'Account_Number' => '60016',
             'Unique_ID'      => $unique_id,
         ];
 
