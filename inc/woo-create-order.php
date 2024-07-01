@@ -157,6 +157,7 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
 add_action( 'woocommerce_order_status_changed', 'woa_woo_update_order_status', 10, 3 );
 
 function woa_update_order_with_api( $order_id, $items ) {
+
     // Get the order object
     $order = wc_get_order( $order_id );
 
@@ -177,19 +178,19 @@ function woa_update_order_with_api( $order_id, $items ) {
     $phone      = $order->get_billing_phone();
 
     // Retrieve custom fields data if available
-    $account_number   = '60016';
     $reference_number = get_post_meta( $order_id, '_reference_number', true );
-    $unique_id        = get_post_meta( $order_id, '_order_unique_id', true );
+    $unique_id        = $order->get_meta( '_order_unique_id', true );
 
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
+    // $order_received_date = '06-30-2024';
     $order_type          = 'Poster Replacement Solution (With Initial All-In-One Poster)';
     $poster_language     = 'English';
 
     // Prepare data to be sent to the API
     $api_data = [
         'Auth_String'             => '525HRD7867200143000',
-        'Account_Number'          => $account_number,
+        'Account_Number'          => '60016',
         'Date_Order_Received'     => $order_received_date,
         'Client_Company'          => $company,
         'Reference_Number'        => $reference_number,
@@ -226,7 +227,6 @@ function woa_update_order_with_api( $order_id, $items ) {
     );
 
     $response = curl_exec( $curl );
-
     curl_close( $curl );
 }
 // Hook into the order save action after items are saved
@@ -234,7 +234,7 @@ add_action( 'woocommerce_update_order', 'woa_update_order_with_api', 10, 2 );
 
 
 // Hook into the order edit page to display additional information
-add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
+/* add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
 function woa_display_order_details_from_api( $order ) {
 
     // Get the order ID
@@ -336,6 +336,7 @@ function woa_make_api_call_for_order_details( $order_id, $account_number, $order
     );
 
     $response = curl_exec( $curl );
+    // put_api_response_data( $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
@@ -347,4 +348,4 @@ function woa_make_api_call_for_order_details( $order_id, $account_number, $order
     curl_close( $curl );
 
     return json_decode( $response, true );
-}
+} */
