@@ -1,6 +1,6 @@
 <?php
 
-function woa_create_order_with_api() {
+function poa_create_order() {
 
     // Get the WooCommerce cart object
     $cart = WC()->cart;
@@ -14,13 +14,26 @@ function woa_create_order_with_api() {
         foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
             // Check if the cart item has the desired variation attribute
             if ( isset( $cart_item['variation']['attribute_pa_language'] ) ) {
-                // Set the poster language to the attribute value
+                // Get the attribute value
                 $poster_language = sanitize_text_field( $cart_item['variation']['attribute_pa_language'] );
+                // If the language is 'both', create two orders
+                if ( $poster_language === 'both' ) {
+                    // Create order for English
+                    create_order_for_language( 'English' );
+                    // Create order for Spanish
+                    create_order_for_language( 'Spanish' );
+                    return; // Stop the function after creating both orders
+                }
                 break; // Stop the loop after finding the first match
             }
         }
     }
 
+    // If not 'both', create a single order
+    create_order_for_language( $poster_language );
+}
+
+function create_order_for_language( $poster_language ) {
     // Retrieve checkout fields
     $first_name = sanitize_text_field( $_POST['billing_first_name'] );
     $last_name  = sanitize_text_field( $_POST['billing_last_name'] );
@@ -34,7 +47,7 @@ function woa_create_order_with_api() {
     $phone      = sanitize_text_field( $_POST['billing_phone'] );
 
     // Generate a unique ID
-    $unique_id = 'order_' . time();
+    $unique_id = 'order_' . time() . '_' . $poster_language;
 
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
@@ -61,9 +74,7 @@ function woa_create_order_with_api() {
         'Poster_Language'         => $poster_language,
     ];
 
-    // put_api_response_data(json_encode($api_data));
-    // die();
-
+    // Call the API
     $curl = curl_init();
 
     curl_setopt_array(
@@ -94,7 +105,7 @@ function woa_create_order_with_api() {
 
     // Decode the response
     $response_data = json_decode( $response, true );
-    // extract order_number from response
+    // Extract order_number from response
     $order_number = $response_data['data']['Order_Number'];
 
     // Check the response code
@@ -105,16 +116,17 @@ function woa_create_order_with_api() {
     } else {
         // Store the unique ID in session for later use
         WC()->session->set( 'api_unique_id', $unique_id );
-        // store order number in session
+        // Store order number in session
         WC()->session->set( 'woa_order_number', $order_number );
-        // store poster language in session
+        // Store poster language in session
         WC()->session->set( 'poster_language', $poster_language );
     }
 }
-// Order Creation API Integration
-add_action( 'woocommerce_checkout_process', 'woa_create_order_with_api' );
 
-function woa_save_unique_id_to_order( $order, $data ) {
+// Order Creation API Integration
+add_action( 'woocommerce_checkout_process', 'poa_create_order' );
+
+function poa_save_order_meta_data( $order, $data ) {
     // Get the unique ID from the session
     $unique_id = WC()->session->get( 'api_unique_id' );
     // Get order number from session
@@ -134,10 +146,11 @@ function woa_save_unique_id_to_order( $order, $data ) {
         WC()->session->set( 'poster_language', null );
     }
 }
-// Save unique ID to order
-add_action( 'woocommerce_checkout_create_order', 'woa_save_unique_id_to_order', 20, 2 );
 
-function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
+// Save unique ID to order
+add_action( 'woocommerce_checkout_create_order', 'poa_save_order_meta_data', 20, 2 );
+
+function poa_cancel_order_and_status( $order_id, $old_status, $new_status ) {
 
     // Check if the status is changing to "cancelled"
     if ( $new_status === 'cancelled' ) {
@@ -171,13 +184,14 @@ function woa_woo_update_order_status( $order_id, $old_status, $new_status ) {
         );
 
         $response = curl_exec( $curl );
+        put_api_response_data( 'Cancel API: ' . $response );
         curl_close( $curl );
     }
 }
 // Hook the function to the WooCommerce order status changed action
-add_action( 'woocommerce_order_status_changed', 'woa_woo_update_order_status', 10, 3 );
+add_action( 'woocommerce_order_status_changed', 'poa_cancel_order_and_status', 10, 3 );
 
-function woa_update_order_with_api( $order_id, $items ) {
+function poa_update_order( $order_id, $items ) {
 
     // Get the order object
     $order = wc_get_order( $order_id );
@@ -253,12 +267,12 @@ function woa_update_order_with_api( $order_id, $items ) {
     curl_close( $curl );
 }
 // Hook into the order save action after items are saved
-add_action( 'woocommerce_update_order', 'woa_update_order_with_api', 10, 2 );
+add_action( 'woocommerce_update_order', 'poa_update_order', 10, 2 );
 
 
 // Hook into the order edit page to display additional information
-add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_display_order_details_from_api', 11, 1 );
-function woa_display_order_details_from_api( $order ) {
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'poa_get_order_and_display', 11, 1 );
+function poa_get_order_and_display( $order ) {
 
     // Get the order ID
     $order_id = $order->get_id();
@@ -267,7 +281,7 @@ function woa_display_order_details_from_api( $order ) {
     $account_number = '60016';
 
     // Make the API call to retrieve order details
-    $api_response = woa_make_api_call_for_order_details( $order_id, $account_number, $order_number );
+    $api_response = poa_get_order_details( $order_id, $account_number, $order_number );
 
     if ( $api_response && $api_response['code'] === 3000 ) {
         $order_data = $api_response['data'][0];
@@ -337,7 +351,7 @@ function woa_display_order_details_from_api( $order ) {
     }
 }
 
-function woa_make_api_call_for_order_details( $order_id, $account_number, $order_number ) {
+function poa_get_order_details( $order_id, $account_number, $order_number ) {
 
     $curl = curl_init();
 
