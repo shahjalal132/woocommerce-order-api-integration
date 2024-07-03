@@ -27,5 +27,6 @@ require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-add-fields.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-helper-functions.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-create-tables.php';
 require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-shortcodes.php';
+require_once WOO_ORDER_API_PLUGIN_PATH . '/inc/woo-update-woo-order-status.php';
 
 register_activation_hook( __FILE__, 'poa_create_order_status_table' );
