@@ -271,14 +271,19 @@ add_action( 'woocommerce_update_order', 'poa_update_order', 10, 2 );
 
 
 // Hook into the order edit page to display additional information
- add_action( 'woocommerce_admin_order_data_after_billing_address', 'poa_get_order_and_display', 11, 1 );
+add_action( 'woocommerce_admin_order_data_after_billing_address', 'poa_get_order_and_display', 11, 1 );
 function poa_get_order_and_display( $order ) {
 
+    // Get the order ID
+    $order_id = $order->get_id();
     // Get the order number from order meta
-    $order_number   = $order->get_meta( '_woa_order_number' );
+    $order_number = $order->get_meta( '_woa_order_number' );
 
     // Make the API call to retrieve order details
     $api_response = poa_get_order_details( $order_number );
+
+    // put_api_response_data( json_encode( $api_response ) );
+    insert_order_data_db( $order_id, $api_response );
 
     if ( $api_response && $api_response['code'] === 3000 ) {
         $order_data = $api_response['data'][0];
@@ -386,4 +391,27 @@ function poa_get_order_details( $order_number ) {
     curl_close( $curl );
 
     return json_decode( $response, true );
+}
+
+// insert order data to database
+function insert_order_data_db( $order_id, $api_order_data ) {
+
+    // Extract order details from API response
+    $order_data = $api_order_data['data'][0];
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'sync_order_status';
+
+    // Prepare the data to be inserted
+    $data = array(
+        'order_id'     => $order_id,
+        'order_data'   => json_encode( $order_data ),
+        'order_status' => $order_data['Subform_ID.Order_Status'],
+    );
+
+    // Insert the data into the database
+    $wpdb->insert(
+        $table_name,
+        $data
+    );
 }
