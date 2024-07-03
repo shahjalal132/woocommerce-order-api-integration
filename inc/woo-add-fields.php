@@ -12,7 +12,10 @@ function woa_make_company_field_required( $fields ) {
 // Add custom field to the edit order form
 add_action( 'woocommerce_admin_order_data_after_billing_address', 'woa_add_custom_field_to_edit_order_form' );
 function woa_add_custom_field_to_edit_order_form( $order ) {
-    $reference_number = get_post_meta( $order->get_id(), '_reference_number', true );
+
+    // Get reference number
+    $reference_number = $order->get_meta( '_order_unique_id' ) ?? '';
+    
     ?>
     <div class="form-field form-field-wide" style="margin-bottom: 20px;">
         <label for="reference_number"><?php _e( 'Reference Number', 'woocommerce' ); ?></label>
@@ -35,6 +38,7 @@ function woa_validate_custom_field_before_save( $order ) {
 // Save the custom field value when the order is updated
 add_action( 'woocommerce_process_shop_order_meta', 'woa_save_custom_field_value' );
 function woa_save_custom_field_value( $order_id ) {
+
     if ( isset( $_POST['reference_number'] ) ) {
         update_post_meta( $order_id, '_reference_number', sanitize_text_field( $_POST['reference_number'] ) );
     }
