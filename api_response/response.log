@@ -8,3 +8,9 @@ Order Details{"code":3000,"data":[{"Date_Order_Received":"07-02-2024","Subform_I
 
 Order data inserted successfully - 2024-07-03 05:31:13
 
+Create API: {"code":3000,"data":{"Record_ID":"","Error_Log":"","Order_Number":"2024-07-02-1683868","ID":"525723000260788054"},"message":"Data Added Successfully"} - 2024-07-03 05:47:18
+
+Update API: {"code":3001,"error":[{"task":"alert","alert_message":["Enter a value for Reference Number"]},{"task":"cancel_submit","message":"Failed to add data."}]} - 2024-07-03 05:47:21
+
+Update API: {"code":3001,"error":[{"task":"alert","alert_message":["Enter a value for Reference Number"]},{"task":"cancel_submit","message":"Failed to add data."}]} - 2024-07-03 05:47:24
+

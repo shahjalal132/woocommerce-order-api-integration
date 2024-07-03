@@ -167,7 +167,7 @@ function poa_insert_order_data_db_after_order_create( $order_id ) {
     $get_order_details = poa_get_order_details( $order_number );
     // Insert order data to database
     poa_insert_order_data_db( $order_id, $get_order_details );
-    
+
 }
 add_action( 'woocommerce_thankyou', 'poa_insert_order_data_db_after_order_create', 20, 2 );
 
@@ -425,14 +425,42 @@ function poa_insert_order_data_db( $order_id, $api_order_data ) {
 
     // Prepare the data to be inserted
     $data = array(
-        'order_id'     => $order_id,
-        'order_data'   => json_encode( $order_data ),
-        'order_status' => $order_data['Subform_ID.Order_Status'],
+        'order_id'        => $order_id,
+        'order_unique_id' => $order_data['Subform_ID.Reference_Number'],
+        'order_data'      => json_encode( $order_data ),
+        'order_status'    => $order_data['Subform_ID.Order_Status'],
     );
 
     // Insert the data into the database
     $wpdb->insert(
         $table_name,
         $data
+    );
+}
+
+// update order data to database
+function poa_update_order_data_db( $order_id, $api_order_data ) {
+
+    // Extract order details from API response
+    $order_data      = $api_order_data['data'][0];
+    $order_unique_id = $order_data['Subform_ID.Reference_Number'];
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'sync_order_status';
+
+    // Prepare the data to be updated
+    $data = array(
+        'order_id'        => $order_id,
+        'order_unique_id' => $order_unique_id,
+        'order_data'      => json_encode( $order_data ),
+        'order_status'    => $order_data['Subform_ID.Order_Status'],
+    );
+
+    // Update the data in the database
+    $where = array( 'order_unique_id' => $order_unique_id );
+    $wpdb->update(
+        $table_name,
+        $data,
+        $where
     );
 }

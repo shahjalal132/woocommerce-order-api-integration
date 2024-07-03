@@ -11,6 +11,7 @@ function poa_create_order_status_table() {
     $sql = "CREATE TABLE IF NOT EXISTS $table_name (
         id INT AUTO_INCREMENT,
         order_id INT NOT NULL UNIQUE,
+        order_unique_id VARCHAR(255) NOT NULL UNIQUE,
         order_data TEXT NULL,
         order_status VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
