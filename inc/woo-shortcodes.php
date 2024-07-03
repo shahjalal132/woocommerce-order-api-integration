@@ -7,7 +7,6 @@ function poa_update_order_status_db() {
     $api_data       = json_decode( $api_data, true );
 
     poa_update_order_data_db( $api_data );
-    // poa_update_order_data_db( 'Cancelled', 'order_1719985633_english' );
 
     return 'Order status updated successfully';
 
