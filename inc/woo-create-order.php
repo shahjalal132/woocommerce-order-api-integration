@@ -93,7 +93,7 @@ function create_order_for_language( $poster_language ) {
     );
 
     $response = curl_exec( $curl );
-    put_api_response_data( 'Create API: ' . $response );
+    // put_api_response_data( 'Create API: ' . $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
@@ -164,7 +164,7 @@ function poa_insert_order_data_db_after_order_create( $order_id ) {
     $order_number = $order->get_meta( '_woa_order_number', true );
 
     // Get Order details from api
-    $get_order_details = poa_get_order_details( $order_number );
+    $get_order_details = poa_get_order_details_from_api( $order_number );
     // Insert order data to database
     poa_insert_order_data_db( $order_id, $get_order_details );
 
@@ -205,7 +205,7 @@ function poa_cancel_order_and_status( $order_id, $old_status, $new_status ) {
         );
 
         $response = curl_exec( $curl );
-        put_api_response_data( 'Cancel API: ' . $response );
+        // put_api_response_data( 'Cancel API: ' . $response );
         curl_close( $curl );
     }
 }
@@ -284,7 +284,7 @@ function poa_update_order( $order_id, $items ) {
     );
 
     $response = curl_exec( $curl );
-    put_api_response_data( 'Update API: ' . $response );
+    // put_api_response_data( 'Update API: ' . $response );
     curl_close( $curl );
 }
 // Hook into the order save action after items are saved
@@ -301,7 +301,7 @@ function poa_get_order_and_display( $order ) {
     $order_number = $order->get_meta( '_woa_order_number' );
 
     // Make the API call to retrieve order details
-    $api_response = poa_get_order_details( $order_number );
+    $api_response = poa_get_order_details_from_api( $order_number );
 
     // put_api_response_data( json_encode( $api_response ) );
     // poa_insert_order_data_db( $order_id, $api_response );
@@ -374,7 +374,12 @@ function poa_get_order_and_display( $order ) {
     }
 }
 
-function poa_get_order_details( $order_number ) {
+/**
+ * Fetch Order details from api by order_number
+ *
+ * @param string $order_number
+ */
+function poa_get_order_details_from_api( $order_number ) {
 
     $curl = curl_init();
 

@@ -26,12 +26,15 @@ add_shortcode( 'update_order_status', 'poa_update_order_status_db' );
 function get_order_status_from_db_callback() {
 
     global $wpdb;
-    $table_name   = $wpdb->prefix . 'sync_order_status';
-    $order_status = $wpdb->get_results( "SELECT id, order_id, order_unique_id, order_number, order_status FROM $table_name" );
+    $table_name = $wpdb->prefix . 'sync_order_status';
+    $sql        = "SELECT id, order_id, order_unique_id, order_number, order_status FROM $table_name";
+    // $sql          = "SELECT id, order_id, order_unique_id, order_number, order_status FROM $table_name WHERE order_status != 'completed'";
 
-    return $order_status;
+    $order_status = $wpdb->get_results( $wpdb->prepare( $sql ) );
+
     // echo '<pre>';
     // print_r( $order_status );
+    return $order_status;
 }
 
 add_shortcode( 'get_order_status_from_db', 'get_order_status_from_db_callback' );

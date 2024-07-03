@@ -57,7 +57,12 @@ function poa_insert_order_data_db( $order_id, $api_order_data ) {
     }
 }
 
-// update order data to database
+/**
+ * update order data to database
+ *
+ * @param array $api_order_data
+ * @return void
+ */
 function poa_update_order_data_db( $api_order_data ) {
 
     // Check if the API response contains the expected data structure
