@@ -27,7 +27,7 @@ function get_order_status_from_db_callback() {
 
     global $wpdb;
     $table_name   = $wpdb->prefix . 'sync_order_status';
-    $order_status = $wpdb->get_results( "SELECT id, order_id, order_status FROM $table_name" );
+    $order_status = $wpdb->get_results( "SELECT id, order_id, order_unique_id, order_number, order_status FROM $table_name" );
 
     return $order_status;
     // echo '<pre>';

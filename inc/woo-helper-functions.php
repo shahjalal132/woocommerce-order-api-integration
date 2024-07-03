@@ -39,19 +39,22 @@ function poa_insert_order_data_db( $order_id, $api_order_data ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'sync_order_status';
 
-    // Prepare the data to be inserted
-    $data = array(
-        'order_id'        => $order_id,
-        'order_unique_id' => $order_data['Subform_ID.Reference_Number'],
-        'order_data'      => json_encode( $order_data ),
-        'order_status'    => $order_data['Subform_ID.Order_Status'],
-    );
+    if ( !empty( $order_data ) ) {
+        // Prepare the data to be inserted
+        $data = array(
+            'order_id'        => $order_id,
+            'order_unique_id' => $order_data['Subform_ID.Reference_Number'],
+            'order_number'    => $order_data['Order_Number'],
+            'order_data'      => json_encode( $order_data ),
+            'order_status'    => $order_data['Subform_ID.Order_Status'],
+        );
 
-    // Insert the data into the database
-    $wpdb->insert(
-        $table_name,
-        $data
-    );
+        // Insert the data into the database
+        $wpdb->insert(
+            $table_name,
+            $data
+        );
+    }
 }
 
 // update order data to database

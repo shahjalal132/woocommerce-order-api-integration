@@ -12,6 +12,7 @@ function poa_create_order_status_table() {
         id INT AUTO_INCREMENT,
         order_id INT NOT NULL UNIQUE,
         order_unique_id VARCHAR(255) NOT NULL UNIQUE,
+        order_number VARCHAR(300) NOT NULL UNIQUE,
         order_data TEXT NULL,
         order_status VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
