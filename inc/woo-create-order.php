@@ -439,28 +439,34 @@ function poa_insert_order_data_db( $order_id, $api_order_data ) {
 }
 
 // update order data to database
-function poa_update_order_data_db( $order_id, $api_order_data ) {
+function poa_update_order_data_db( $api_order_data ) {
 
-    // Extract order details from API response
-    $order_data      = $api_order_data['data'][0];
-    $order_unique_id = $order_data['Subform_ID.Reference_Number'];
+    // Check if the API response contains the expected data structure
+    if ( isset( $api_order_data['data'][0] ) ) {
 
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'sync_order_status';
+        $order_data      = $api_order_data['data'][0];
+        $order_unique_id = $order_data['Subform_ID.Reference_Number'];
+        $order_status    = $order_data['Subform_ID.Order_Status'];
 
-    // Prepare the data to be updated
-    $data = array(
-        'order_id'        => $order_id,
-        'order_unique_id' => $order_unique_id,
-        'order_data'      => json_encode( $order_data ),
-        'order_status'    => $order_data['Subform_ID.Order_Status'],
-    );
+        // Check if the necessary order details are present
+        if ( !empty( $order_unique_id ) && !empty( $order_status ) ) {
 
-    // Update the data in the database
-    $where = array( 'order_unique_id' => $order_unique_id );
-    $wpdb->update(
-        $table_name,
-        $data,
-        $where
-    );
+            global $wpdb;
+            $table_name = $wpdb->prefix . 'sync_order_status';
+
+            // Prepare the data to be updated
+            $data = array(
+                'order_data'   => json_encode( $order_data ),
+                'order_status' => $order_status,
+            );
+
+            // Update the data in the database
+            $where = array( 'order_unique_id' => $order_unique_id );
+            $wpdb->update(
+                $table_name,
+                $data,
+                $where
+            );
+        }
+    }
 }
