@@ -127,6 +127,7 @@ function create_order_for_language( $poster_language ) {
 add_action( 'woocommerce_checkout_process', 'poa_create_order' );
 
 function poa_save_order_meta_data( $order, $data ) {
+
     // Get the unique ID from the session
     $unique_id = WC()->session->get( 'api_unique_id' );
     // Get order number from session
@@ -149,6 +150,26 @@ function poa_save_order_meta_data( $order, $data ) {
 
 // Save unique ID to order
 add_action( 'woocommerce_checkout_create_order', 'poa_save_order_meta_data', 20, 2 );
+
+/**
+ * Insert order data to database
+ * 
+ * @param int $order_id
+ */
+function poa_insert_order_data_db_after_order_create( $order_id ) {
+
+    // Get order
+    $order = wc_get_order( $order_id );
+    // Get order number
+    $order_number = $order->get_meta( '_woa_order_number', true );
+
+    // Get Order details from api
+    $get_order_details = poa_get_order_details( $order_number );
+    // Insert order data to database
+    poa_insert_order_data_db( $order_id, $get_order_details );
+    
+}
+add_action( 'woocommerce_thankyou', 'poa_insert_order_data_db_after_order_create', 20, 2 );
 
 function poa_cancel_order_and_status( $order_id, $old_status, $new_status ) {
 
@@ -283,7 +304,7 @@ function poa_get_order_and_display( $order ) {
     $api_response = poa_get_order_details( $order_number );
 
     // put_api_response_data( json_encode( $api_response ) );
-    insert_order_data_db( $order_id, $api_response );
+    // poa_insert_order_data_db( $order_id, $api_response );
 
     if ( $api_response && $api_response['code'] === 3000 ) {
         $order_data = $api_response['data'][0];
@@ -394,7 +415,7 @@ function poa_get_order_details( $order_number ) {
 }
 
 // insert order data to database
-function insert_order_data_db( $order_id, $api_order_data ) {
+function poa_insert_order_data_db( $order_id, $api_order_data ) {
 
     // Extract order details from API response
     $order_data = $api_order_data['data'][0];
