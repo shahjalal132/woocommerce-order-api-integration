@@ -271,17 +271,14 @@ add_action( 'woocommerce_update_order', 'poa_update_order', 10, 2 );
 
 
 // Hook into the order edit page to display additional information
-add_action( 'woocommerce_admin_order_data_after_billing_address', 'poa_get_order_and_display', 11, 1 );
+ add_action( 'woocommerce_admin_order_data_after_billing_address', 'poa_get_order_and_display', 11, 1 );
 function poa_get_order_and_display( $order ) {
 
-    // Get the order ID
-    $order_id = $order->get_id();
     // Get the order number from order meta
     $order_number   = $order->get_meta( '_woa_order_number' );
-    $account_number = '60016';
 
     // Make the API call to retrieve order details
-    $api_response = poa_get_order_details( $order_id, $account_number, $order_number );
+    $api_response = poa_get_order_details( $order_number );
 
     if ( $api_response && $api_response['code'] === 3000 ) {
         $order_data = $api_response['data'][0];
@@ -351,7 +348,7 @@ function poa_get_order_and_display( $order ) {
     }
 }
 
-function poa_get_order_details( $order_id, $account_number, $order_number ) {
+function poa_get_order_details( $order_number ) {
 
     $curl = curl_init();
 
@@ -368,7 +365,7 @@ function poa_get_order_details( $order_id, $account_number, $order_number ) {
             CURLOPT_CUSTOMREQUEST  => 'POST',
             CURLOPT_POSTFIELDS     => array(
                 'Auth_String'    => '525HRD7867200143000',
-                'Account_Number' => $account_number,
+                'Account_Number' => '60016',
                 'order_number'   => $order_number,
                 'status'         => '',
                 'start_index'    => '0',
