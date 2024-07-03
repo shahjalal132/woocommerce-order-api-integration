@@ -34,17 +34,43 @@ function poa_create_order() {
 }
 
 function create_order_for_language( $poster_language ) {
-    // Retrieve checkout fields
-    $first_name = sanitize_text_field( $_POST['billing_first_name'] );
-    $last_name  = sanitize_text_field( $_POST['billing_last_name'] );
-    $company    = sanitize_text_field( $_POST['billing_company'] );
-    $address_1  = sanitize_text_field( $_POST['billing_address_1'] );
-    $address_2  = sanitize_text_field( $_POST['billing_address_2'] );
-    $city       = sanitize_text_field( $_POST['billing_city'] );
-    $state      = sanitize_text_field( $_POST['billing_state'] );
-    $postcode   = sanitize_text_field( $_POST['billing_postcode'] );
-    $email      = sanitize_email( $_POST['billing_email'] );
-    $phone      = sanitize_text_field( $_POST['billing_phone'] );
+
+    // Retrieve billing checkout fields
+    $billing_first_name = sanitize_text_field( $_POST['billing_first_name'] );
+    $billing_last_name  = sanitize_text_field( $_POST['billing_last_name'] );
+    $billing_company    = sanitize_text_field( $_POST['billing_company'] );
+    $billing_address_1  = sanitize_text_field( $_POST['billing_address_1'] );
+    $billing_address_2  = sanitize_text_field( $_POST['billing_address_2'] );
+    $billing_city       = sanitize_text_field( $_POST['billing_city'] );
+    $billing_state      = sanitize_text_field( $_POST['billing_state'] );
+    $billing_postcode   = sanitize_text_field( $_POST['billing_postcode'] );
+    $billing_email      = sanitize_email( $_POST['billing_email'] );
+    $billing_phone      = sanitize_text_field( $_POST['billing_phone'] );
+
+    // Check if 'Ship to a different address' is checked
+    $ship_to_different_address = isset( $_POST['ship_to_different_address'] ) && $_POST['ship_to_different_address'] === '1';
+
+    if ( $ship_to_different_address ) {
+        // Retrieve shipping checkout fields
+        $shipping_first_name = sanitize_text_field( $_POST['shipping_first_name'] );
+        $shipping_last_name  = sanitize_text_field( $_POST['shipping_last_name'] );
+        $shipping_company    = sanitize_text_field( $_POST['shipping_company'] );
+        $shipping_address_1  = sanitize_text_field( $_POST['shipping_address_1'] );
+        $shipping_address_2  = sanitize_text_field( $_POST['shipping_address_2'] );
+        $shipping_city       = sanitize_text_field( $_POST['shipping_city'] );
+        $shipping_state      = sanitize_text_field( $_POST['shipping_state'] );
+        $shipping_postcode   = sanitize_text_field( $_POST['shipping_postcode'] );
+    } else {
+        // Use billing address as shipping address
+        $shipping_first_name = $billing_first_name;
+        $shipping_last_name  = $billing_last_name;
+        $shipping_company    = $billing_company;
+        $shipping_address_1  = $billing_address_1;
+        $shipping_address_2  = $billing_address_2;
+        $shipping_city       = $billing_city;
+        $shipping_state      = $billing_state;
+        $shipping_postcode   = $billing_postcode;
+    }
 
     // Generate a unique ID
     $unique_id = 'order_' . time() . '_' . $poster_language;
@@ -58,19 +84,19 @@ function create_order_for_language( $poster_language ) {
         'Auth_String'             => '525HRD7867200143000',
         'Account_Number'          => '60016',
         'Date_Order_Received'     => $order_received_date,
-        'Client_Company'          => $company,
+        'Client_Company'          => $shipping_company,
         'Unique_ID'               => $unique_id,
-        'Client_First_Name'       => $first_name,
-        'Client_Last_Name'        => $last_name,
-        'Client_Street_Address_1' => $address_1,
-        'Client_Street_Address_2' => $address_2,
-        'Client_City'             => $city,
-        'Client_State'            => $state,
-        'Client_ZIP'              => $postcode,
-        'Client_Email_Address'    => $email,
-        'Client_Phone_Number'     => $phone,
+        'Client_First_Name'       => $shipping_first_name,
+        'Client_Last_Name'        => $shipping_last_name,
+        'Client_Street_Address_1' => $shipping_address_1,
+        'Client_Street_Address_2' => $shipping_address_2,
+        'Client_City'             => $shipping_city,
+        'Client_State'            => $shipping_state,
+        'Client_ZIP'              => $shipping_postcode,
+        'Client_Email_Address'    => $billing_email,
+        'Client_Phone_Number'     => $billing_phone,
         'Order_Type'              => $order_type,
-        'Poster_State'            => $state,
+        'Poster_State'            => $shipping_state,
         'Poster_Language'         => $poster_language,
     ];
 
@@ -93,7 +119,6 @@ function create_order_for_language( $poster_language ) {
     );
 
     $response = curl_exec( $curl );
-    // put_api_response_data( 'Create API: ' . $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
@@ -221,17 +246,42 @@ function poa_update_order( $order_id, $items ) {
         return;
     }
 
-    // Retrieve the updated order data
-    $first_name = $order->get_billing_first_name();
-    $last_name  = $order->get_billing_last_name();
-    $company    = $order->get_billing_company();
-    $address_1  = $order->get_billing_address_1();
-    $address_2  = $order->get_billing_address_2();
-    $city       = $order->get_billing_city();
-    $state      = $order->get_billing_state();
-    $postcode   = $order->get_billing_postcode();
-    $email      = $order->get_billing_email();
-    $phone      = $order->get_billing_phone();
+    // Retrieve the billing address data
+    $billing_first_name = $order->get_billing_first_name();
+    $billing_last_name  = $order->get_billing_last_name();
+    $billing_company    = $order->get_billing_company();
+    $billing_address_1  = $order->get_billing_address_1();
+    $billing_address_2  = $order->get_billing_address_2();
+    $billing_city       = $order->get_billing_city();
+    $billing_state      = $order->get_billing_state();
+    $billing_postcode   = $order->get_billing_postcode();
+    $billing_email      = $order->get_billing_email();
+    $billing_phone      = $order->get_billing_phone();
+
+    // Check if shipping address is different
+    $ship_to_different_address = $order->get_shipping_address_1() ? true : false;
+
+    if ( $ship_to_different_address ) {
+        // Retrieve the shipping address data
+        $shipping_first_name = $order->get_shipping_first_name();
+        $shipping_last_name  = $order->get_shipping_last_name();
+        $shipping_company    = $order->get_shipping_company();
+        $shipping_address_1  = $order->get_shipping_address_1();
+        $shipping_address_2  = $order->get_shipping_address_2();
+        $shipping_city       = $order->get_shipping_city();
+        $shipping_state      = $order->get_shipping_state();
+        $shipping_postcode   = $order->get_shipping_postcode();
+    } else {
+        // Use billing address as shipping address
+        $shipping_first_name = $billing_first_name;
+        $shipping_last_name  = $billing_last_name;
+        $shipping_company    = $billing_company;
+        $shipping_address_1  = $billing_address_1;
+        $shipping_address_2  = $billing_address_2;
+        $shipping_city       = $billing_city;
+        $shipping_state      = $billing_state;
+        $shipping_postcode   = $billing_postcode;
+    }
 
     // Retrieve custom fields data if available
     $reference_number = get_post_meta( $order_id, '_reference_number', true );
@@ -247,44 +297,48 @@ function poa_update_order( $order_id, $items ) {
         'Auth_String'             => '525HRD7867200143000',
         'Account_Number'          => '60016',
         'Date_Order_Received'     => $order_received_date,
-        'Client_Company'          => $company,
+        'Client_Company'          => $shipping_company,
         'Reference_Number'        => $reference_number,
         'Unique_ID'               => $unique_id,
-        'Client_First_Name'       => $first_name,
-        'Client_Last_Name'        => $last_name,
-        'Client_Street_Address_1' => $address_1,
-        'Client_Street_Address_2' => $address_2,
-        'Client_City'             => $city,
-        'Client_State'            => $state,
-        'Client_ZIP'              => $postcode,
-        'Client_Email_Address'    => $email,
-        'Client_Phone_Number'     => $phone,
+        'Client_First_Name'       => $shipping_first_name,
+        'Client_Last_Name'        => $shipping_last_name,
+        'Client_Street_Address_1' => $shipping_address_1,
+        'Client_Street_Address_2' => $shipping_address_2,
+        'Client_City'             => $shipping_city,
+        'Client_State'            => $shipping_state,
+        'Client_ZIP'              => $shipping_postcode,
+        'Client_Email_Address'    => $billing_email,
+        'Client_Phone_Number'     => $billing_phone,
         'Order_Type'              => $order_type,
-        'Poster_State'            => $state,
+        'Poster_State'            => $shipping_state,
         'Poster_Language'         => $poster_language,
     ];
 
-    // put_api_response_data( json_encode( $api_data ) );
+    // Debugging purpose
+    // put_api_response_data(json_encode($api_data));
 
     $curl = curl_init();
 
-    curl_setopt_array(
-        $curl,
-        array(
-            CURLOPT_URL            => 'https://www.posterelite.com/api/Order_Update.php',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING       => '',
-            CURLOPT_MAXREDIRS      => 10,
-            CURLOPT_TIMEOUT        => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST  => 'POST',
-            CURLOPT_POSTFIELDS     => http_build_query( $api_data ),
-        )
-    );
+    curl_setopt_array( $curl, [
+        CURLOPT_URL            => 'https://www.posterelite.com/api/Order_Update.php',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING       => '',
+        CURLOPT_MAXREDIRS      => 10,
+        CURLOPT_TIMEOUT        => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST  => 'POST',
+        CURLOPT_POSTFIELDS     => http_build_query( $api_data ),
+    ] );
 
     $response = curl_exec( $curl );
-    // put_api_response_data( 'Update API: ' . $response );
+
+    if ( curl_errno( $curl ) ) {
+        $error_msg = curl_error( $curl );
+        error_log( 'Curl error: ' . $error_msg );
+        $response = '{"code":4000,"message":"There was an error processing your request. Please try again."}';
+    }
+
     curl_close( $curl );
 }
 // Hook into the order save action after items are saved
