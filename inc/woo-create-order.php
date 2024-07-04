@@ -4,14 +4,32 @@ function poa_create_order() {
 
     // Get the WooCommerce cart object
     $cart = WC()->cart;
+    
+    // put_api_response_data( json_encode($cart) );
 
     // Initialize the poster language variable
     $poster_language = 'English'; // default value
+    
+    $poster_state = '';
 
     // Check if the cart is not empty
     if ( !$cart->is_empty() ) {
         // Loop through cart items
         foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
+            
+            // Get the product ID
+            $product_id = $cart_item['product_id'];
+            // Get the product object
+            $product = wc_get_product( $product_id );
+            
+            // Retrieve product information
+            $product_title = $product->get_title();
+            
+            // Convert Title to an array to get State
+            $words = explode(' ', $product_title);
+            // Retrieve First word.
+            $poster_state = $words[0];
+            
             // Check if the cart item has the desired variation attribute
             if ( isset( $cart_item['variation']['attribute_pa_language'] ) ) {
                 // Get the attribute value
@@ -19,21 +37,22 @@ function poa_create_order() {
                 // If the language is 'both', create two orders
                 if ( $poster_language === 'both' ) {
                     // Create order for English
-                    create_order_for_language( 'English' );
+                    create_order_for_language( $poster_state, 'English' );
                     // Create order for Spanish
-                    create_order_for_language( 'Spanish' );
+                    create_order_for_language( $poster_state, 'Spanish' );
                     return; // Stop the function after creating both orders
                 }
                 break; // Stop the loop after finding the first match
             }
         }
     }
+    
 
     // If not 'both', create a single order
-    create_order_for_language( $poster_language );
+    create_order_for_language( $poster_state, $poster_language );
 }
 
-function create_order_for_language( $poster_language ) {
+function create_order_for_language( $poster_state, $poster_language ) {
 
     // Retrieve billing checkout fields
     $billing_first_name = sanitize_text_field( $_POST['billing_first_name'] );
@@ -96,7 +115,7 @@ function create_order_for_language( $poster_language ) {
         'Client_Email_Address'    => $billing_email,
         'Client_Phone_Number'     => $billing_phone,
         'Order_Type'              => $order_type,
-        'Poster_State'            => $shipping_state,
+        'Poster_State'            => $poster_state,
         'Poster_Language'         => $poster_language,
     ];
 
