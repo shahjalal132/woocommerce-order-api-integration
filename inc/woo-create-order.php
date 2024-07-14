@@ -34,21 +34,31 @@ function poa_create_order() {
 
             // Check if the cart item has the desired variation attribute
             if ( isset( $cart_item['variation']['attribute_pa_language'] ) ) {
+
                 // Get the attribute value
                 $poster_language = sanitize_text_field( $cart_item['variation']['attribute_pa_language'] );
 
                 // Check if the cart item has the desired variation attribute for order type
                 if ( isset( $cart_item['variation']['attribute_pa_option'] ) ) {
+                    
                     // Get the attribute value for order type
-                    $order_type = sanitize_text_field( $cart_item['variation']['attribute_pa_option'] );
+                    $subscription = sanitize_text_field( $cart_item['variation']['attribute_pa_option'] );
+
+                    // Check the subscription value
+                    if ( 'monthly-subscription' == $subscription ) {
+                        $order_type = 'E-Update Service (With Initial All-In-One Poster)';
+                    } else if ( 'one-time-poster' == $subscription ) {
+                        $order_type = 'All-In-One State & Federal Labor Law Poster';
+                    }
                 }
 
                 // If the language is 'both', create two orders
                 if ( $poster_language === 'both' ) {
+
                     // Create order for English
-                    create_order_for_language( $poster_state, 'English' );
+                    create_order_for_language( $poster_state, 'English', $order_type );
                     // Create order for Spanish
-                    create_order_for_language( $poster_state, 'Spanish' );
+                    create_order_for_language( $poster_state, 'Spanish', $order_type );
                     return; // Stop the function after creating both orders
                 }
                 break; // Stop the loop after finding the first match
@@ -57,10 +67,10 @@ function poa_create_order() {
     }
 
     // If not 'both', create a single order
-    create_order_for_language( $poster_state, $poster_language );
+    create_order_for_language( $poster_state, $poster_language, $order_type );
 }
 
-function create_order_for_language( $poster_state, $poster_language ) {
+function create_order_for_language( $poster_state, $poster_language, $order_type ) {
 
     // Retrieve billing checkout fields
     $billing_first_name = sanitize_text_field( $_POST['billing_first_name'] );
@@ -104,7 +114,6 @@ function create_order_for_language( $poster_state, $poster_language ) {
 
     // Static data for missing fields
     $order_received_date = date( 'm-d-Y' ); // current date
-    $order_type          = 'E-Update Service (With Initial All-In-One Poster)';
 
     // Prepare data to be sent to the API
     $api_data = [
@@ -146,7 +155,7 @@ function create_order_for_language( $poster_state, $poster_language ) {
     );
 
     $response = curl_exec( $curl );
-    // put_api_response_data( $response );
+    put_api_response_data( $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
@@ -437,12 +446,20 @@ function poa_get_order_and_display( $order ) {
                     <td>{$order_data['Poster_Language']}</td>
                 </tr>
                 <tr>
+                    <th>Poster State</th>
+                    <td>{$order_data['Poster_State']}</td>
+                </tr>
+                <tr>
                     <th>Order Number</th>
                     <td>{$order_data['Order_Number']}</td>
                 </tr>
                 <tr>
                     <th>Order Unique ID</th>
                     <td>{$order_data['Subform_ID.Reference_Number']}</td>
+                </tr>
+                <tr>
+                    <th>Order Type</th>
+                    <td>{$order_data['Poster_Order_Type.Poster_Order_Type']}</td>
                 </tr>
                 <tr>
                     <th>Status</th>
