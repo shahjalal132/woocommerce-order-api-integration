@@ -40,7 +40,7 @@ function poa_create_order() {
 
                 // Check if the cart item has the desired variation attribute for order type
                 if ( isset( $cart_item['variation']['attribute_pa_option'] ) ) {
-                    
+
                     // Get the attribute value for order type
                     $subscription = sanitize_text_field( $cart_item['variation']['attribute_pa_option'] );
 
@@ -155,7 +155,7 @@ function create_order_for_language( $poster_state, $poster_language, $order_type
     );
 
     $response = curl_exec( $curl );
-    put_api_response_data( $response );
+    // put_api_response_data( $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
