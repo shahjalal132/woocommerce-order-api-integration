@@ -4,36 +4,45 @@ function poa_create_order() {
 
     // Get the WooCommerce cart object
     $cart = WC()->cart;
-    
+
     // put_api_response_data( json_encode($cart) );
 
     // Initialize the poster language variable
     $poster_language = 'English'; // default value
-    
+    // Initialize the order type variable
+    $order_type = '';
+    // Initialize the order state variable
     $poster_state = '';
 
     // Check if the cart is not empty
     if ( !$cart->is_empty() ) {
         // Loop through cart items
         foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
-            
+
             // Get the product ID
             $product_id = $cart_item['product_id'];
             // Get the product object
             $product = wc_get_product( $product_id );
-            
+
             // Retrieve product information
             $product_title = $product->get_title();
-            
+
             // Convert Title to an array to get State
-            $words = explode(' ', $product_title);
+            $words = explode( ' ', $product_title );
             // Retrieve First word.
             $poster_state = $words[0];
-            
+
             // Check if the cart item has the desired variation attribute
             if ( isset( $cart_item['variation']['attribute_pa_language'] ) ) {
                 // Get the attribute value
                 $poster_language = sanitize_text_field( $cart_item['variation']['attribute_pa_language'] );
+
+                // Check if the cart item has the desired variation attribute for order type
+                if ( isset( $cart_item['variation']['attribute_pa_option'] ) ) {
+                    // Get the attribute value for order type
+                    $order_type = sanitize_text_field( $cart_item['variation']['attribute_pa_option'] );
+                }
+
                 // If the language is 'both', create two orders
                 if ( $poster_language === 'both' ) {
                     // Create order for English
@@ -46,7 +55,6 @@ function poa_create_order() {
             }
         }
     }
-    
 
     // If not 'both', create a single order
     create_order_for_language( $poster_state, $poster_language );
@@ -138,6 +146,7 @@ function create_order_for_language( $poster_state, $poster_language ) {
     );
 
     $response = curl_exec( $curl );
+    // put_api_response_data( $response );
 
     if ( curl_errno( $curl ) ) {
         $error_msg = curl_error( $curl );
